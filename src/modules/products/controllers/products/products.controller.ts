@@ -16,14 +16,13 @@ import { CloudinaryService } from 'src/shared/services/cloudinary.service';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { CreateProductDto } from '../../dto/create-product.dto';
 
-@UseGuards(JwtAuthGuard)
 @Controller('products')
 export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,
     private readonly cloudinaryService: CloudinaryService,
   ) {}
-
+  @UseGuards(JwtAuthGuard)
   @Post('add')
   @UseInterceptors(FilesInterceptor('images', 5))
   async createProduct(
