@@ -36,7 +36,7 @@ export class CreateProductDto {
   category: string;
 
   @IsString()
-  @IsNotEmpty({ message: 'La marque est obligatoire.' })
+  @IsOptional()
   brand: string;
 
   @IsString()

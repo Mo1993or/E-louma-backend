@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Controller,
   Post,
@@ -65,5 +67,12 @@ export class ProductsController {
   @Get('index')
   async findAllProductAvalaible() {
     return this.productsService.getAllProduct();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getProductsByOwner(@Request() req: any) {
+    const userId = req.user.sub;
+    return this.productsService.getAllProductsOwer(userId);
   }
 }

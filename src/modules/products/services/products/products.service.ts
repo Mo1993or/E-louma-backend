@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   BadRequestException,
   Injectable,
@@ -15,7 +16,7 @@ export class ProductsService {
   constructor(
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
-  ) {}
+  ) { }
 
   /**
    * Crée un nouveau produit lié à l'utilisateur connecté
@@ -67,5 +68,8 @@ export class ProductsService {
 
   async getAllProduct(): Promise<ProductDocument[]> {
     return await this.productModel.find({ status: ProductStatus.AVAILABLE });
+  }
+  async getAllProductsOwer(userId: string): Promise<ProductDocument[]> {
+    return await this.productModel.find({ status: ProductStatus.AVAILABLE, seller: new Types.ObjectId(userId) });
   }
 }

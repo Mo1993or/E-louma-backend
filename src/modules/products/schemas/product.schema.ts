@@ -32,7 +32,7 @@ export class Product {
   }) // Indexé pour accélérer les recherches par catégorie
   category: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ required: false })
   brand: string;
 
   @Prop({ required: true })
