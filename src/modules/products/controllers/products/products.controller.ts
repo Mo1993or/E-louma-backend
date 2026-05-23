@@ -71,7 +71,7 @@ export class ProductsController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async getProductsByOwner(@Request() req: any)s {
+  async getProductsByOwner(@Request() req: any) {
     const userId = req.user.sub;
     return this.productsService.getAllProductsOwer(userId);
   }
