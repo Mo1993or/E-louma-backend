@@ -67,7 +67,9 @@ export class ProductsService {
   }
 
   async getAllProduct(): Promise<ProductDocument[]> {
-    return await this.productModel.find({ status: ProductStatus.AVAILABLE });
+    return await this.productModel.find({ status: ProductStatus.AVAILABLE })
+      .populate('category')
+      .exec();
   }
   async getAllProductsOwer(userId: string): Promise<ProductDocument[]> {
     return await this.productModel.find({ status: ProductStatus.AVAILABLE, seller: new Types.ObjectId(userId) });
