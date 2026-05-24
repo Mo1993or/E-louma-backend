@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { Categorie } from 'src/modules/categories/schemas/categorie.schema';
 import {
   ProductCondition,
   ProductStatus,
@@ -13,16 +12,16 @@ export type ProductDocument = HydratedDocument<Product>;
 })
 export class Product {
   @Prop({ required: true, trim: true })
-  title: string;
+  title!: string;
 
   @Prop({ required: false, trim: true })
-  description: string;
+  description?: string;
 
   @Prop({ required: true, min: 0 })
-  price: number;
+  price!: number;
 
   @Prop({ required: true })
-  pricenegotiable: boolean;
+  pricenegotiable!: boolean;
 
   @Prop({
     type: Types.ObjectId,
@@ -30,39 +29,39 @@ export class Product {
     required: true,
     index: true,
   }) // Indexé pour accélérer les recherches par catégorie
-  category: Types.ObjectId;
+  category!: Types.ObjectId;
 
   @Prop({ required: false })
-  brand: string;
+  brand?: string;
 
   @Prop({ required: true })
-  quantity: string;
+  quantity!: string;
 
   @Prop({
     type: String,
     enum: Object.values(ProductCondition),
     required: true,
   })
-  condition: ProductCondition;
+  condition?: ProductCondition;
 
   @Prop({ type: [String], required: true }) // Tableau d'URLs d'images
-  images: string[];
+  images!: string[];
 
   @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true }) // Relation avec le schéma User
-  seller: Types.ObjectId;
+  seller?: Types.ObjectId;
 
   @Prop({
     type: String,
     enum: Object.values(ProductStatus),
     default: ProductStatus.AVAILABLE,
   })
-  status: ProductStatus;
+  status!: ProductStatus;
 
   @Prop({ type: Number, default: 0, min: 0 })
-  favoritesCount: number;
+  favoritesCount!: number;
 
   @Prop({ type: Number, default: 0, min: 0 })
-  views: number;
+  views!: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
