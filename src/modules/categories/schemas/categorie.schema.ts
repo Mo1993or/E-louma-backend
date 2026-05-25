@@ -11,12 +11,12 @@ export class Categorie {
     required: true,
     unique: true,
   })
-  name: string;
+  name!: string;
 
   @Prop({
     required: false,
   })
-  image: string;
+  image?: string;
 }
 
 export const CategorieSchema = SchemaFactory.createForClass(Categorie);

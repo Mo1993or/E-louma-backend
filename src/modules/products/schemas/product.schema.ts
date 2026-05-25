@@ -28,13 +28,13 @@ export class Product {
     ref: 'Categorie',
     required: true,
     index: true,
-  }) // Indexé pour accélérer les recherches par catégorie
+  })
   category!: Types.ObjectId;
 
   @Prop({ required: false })
   brand?: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, min: 0 })
   quantity!: string;
 
   @Prop({

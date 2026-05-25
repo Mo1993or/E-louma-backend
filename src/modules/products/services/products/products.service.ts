@@ -8,7 +8,6 @@ import { Model, Types } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Product, ProductDocument } from '../../schemas/product.schema';
 import { CreateProductDto } from '../../dto/create-product.dto';
-import { Categorie } from 'src/modules/categories/schemas/categorie.schema';
 import { ProductStatus } from 'src/shared/enums/product.enums';
 
 @Injectable()

@@ -11,41 +11,41 @@ export class User {
   @Prop({
     required: true,
   })
-  fullname: string;
+  fullname!: string;
 
   @Prop({
     required: true,
     unique: true,
   })
-  email: string;
+  email!: string;
 
   @Prop({
     required: true,
     unique: true,
   })
-  phonenumber: string;
+  phonenumber!: string;
 
   @Prop({
     required: true,
   })
-  password: string;
+  password!: string;
 
   @Prop({
     type: String,
     enum: Object.values(UserProfile),
     default: UserProfile.USER,
   })
-  role: UserProfile;
+  role!: UserProfile;
 
   @Prop({
     default: false,
   })
-  isVerified: boolean;
+  isVerified!: boolean;
 
   @Prop({
     required: false,
   })
-  avatar: string;
+  avatar?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
