@@ -2,8 +2,8 @@ import { IsEmpty, IsNotEmpty } from 'class-validator';
 
 export class CategorieDto {
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @IsEmpty()
-  image: string;
+  image?: string;
 }
