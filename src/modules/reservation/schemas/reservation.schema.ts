@@ -15,13 +15,11 @@ export class Reservation {
 
     @Prop({
         required: true,
-        unique: true,
     })
     email!: string;
 
     @Prop({
         required: true,
-        unique: true,
     })
     phonenumber!: string;
 
