@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/require-await */
 import { Module } from '@nestjs/common';
 import { AuthController } from './controllers/auth/auth.controller';
 import { AuthService } from './services/auth/auth.service';
@@ -7,6 +8,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { User, UserSchema } from './schemas/user.schema';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import {
+  VerificationCode,
+  VerificationCodeSchema,
+} from './schemas/verification-code.schema';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { join } from 'path';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 
 @Module({
   imports: [
@@ -17,7 +25,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'), //   Injecté proprement
+        secret: configService.get<string>('JWT_SECRET'), // Injecté proprement
         signOptions: { expiresIn: '365d' },
       }),
     }),
@@ -27,7 +35,35 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         name: User.name,
         schema: UserSchema,
       },
+      {
+        name: VerificationCode.name,
+        schema: VerificationCodeSchema,
+      },
     ]),
+
+    MailerModule.forRoot({
+      // Configuration du serveur SMTP (Mailtrap configuré)
+      transport: {
+        host: 'sandbox.smtp.mailtrap.io',
+        port: 2525,
+        auth: {
+          user: '10031761b2ebc4',
+          pass: '125ea5df9a393f',
+        },
+      },
+      // Configuration de l'expéditeur par défaut personnalisé pour E-Louma
+      defaults: {
+        from: '"E-Louma" <noreply@e-louma.com>',
+      },
+      // Configuration des templates
+      template: {
+        dir: join(__dirname, 'templates'), // Dossier : src/votre-module/templates
+        adapter: new HandlebarsAdapter(),
+        options: {
+          strict: true,
+        },
+      },
+    }),
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

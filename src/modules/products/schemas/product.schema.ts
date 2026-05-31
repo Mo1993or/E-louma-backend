@@ -62,6 +62,9 @@ export class Product {
 
   @Prop({ type: Number, default: 0, min: 0 })
   views!: number;
+
+  @Prop({ type: Number, default: 0, min: 0 })
+  reservations!: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);
