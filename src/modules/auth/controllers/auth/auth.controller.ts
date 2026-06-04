@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   BadRequestException,
@@ -38,6 +39,18 @@ export class AuthController {
     return req.user;
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post('send-verification-code')
+  @HttpCode(HttpStatus.OK)
+  async sendCode(@Body('email') email: string, @Request() req) {
+    console.log(req.user.sub);
+
+    await this.authService.sendVerificationCode(req.user.sub, email);
+    return {
+      success: true,
+      message: 'Un code de validation vous a été envoyé.',
+    };
+  }
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
@@ -78,5 +91,16 @@ export class AuthController {
       );
     }
     return await this.authService.verifyRegisterCode(email, code);
+  }
+
+  @Post('verify-code')
+  @HttpCode(HttpStatus.OK)
+  async verifyCode(@Body('email') email: string, @Body('code') code: string) {
+    if (!email || !code) {
+      throw new BadRequestException(
+        "L'email et le code de validation sont obligatoires.",
+      );
+    }
+    return await this.authService.verifyCode(email, code);
   }
 }
