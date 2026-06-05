@@ -75,4 +75,9 @@ export class ProductsController {
     const userId = req.user.sub;
     return this.productsService.getAllProductsOwer(userId);
   }
+
+  @Get('show/:productId')
+  async show(@Param('productId') productId: string) {
+    return this.productsService.findProductById(productId);
+  }
 }

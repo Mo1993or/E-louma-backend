@@ -74,4 +74,20 @@ export class ProductsService {
     return await this.productModel.find({ status: ProductStatus.AVAILABLE, seller: new Types.ObjectId(userId) }).populate('category')
       .exec();
   }
+
+  async findProductById(productId: string) {
+    const product = await this.productModel.findOne({ _id: new Types.ObjectId(productId) }).populate('category')
+      .exec();
+    if (product) {
+      await this.productModel.updateOne(
+      {
+        _id: product._id,
+      },
+      { $inc: { views: 1 } },
+    );
+    return product
+    }
+    throw new NotFoundException("Produit introuvable")
+  }
+
 }

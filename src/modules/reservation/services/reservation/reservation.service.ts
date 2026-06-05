@@ -29,7 +29,7 @@ export class ReservationService {
       {
         _id: new Types.ObjectId(createReservationDto.product),
       },
-      { reservations: 1 },
+      { $inc: { reservations: 1 } },
     );
     return {
       message: 'Réservation effectué',

@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -52,9 +52,18 @@ export class AuthService {
       password: hashedPassword,
     });
 
+    const payload: JwtPayload = {
+      sub: user._id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const accessToken = this.jwtService.sign(payload);
+
     return {
       message: 'User created',
       user,
+      accessToken,
     };
   }
 
@@ -113,6 +122,17 @@ export class AuthService {
     });
   }
 
+  async sendVerificationCode(userId: string, email: string) {
+    const user = await this.userModel.findOne({
+      _id: new Types.ObjectId(userId),
+    });
+    if (user && user.isVerified) {
+      return await this.generateAndSendCode(email, 'REGISTER');
+    }
+
+    throw new BadRequestException('Utilisateur introuvable');
+  }
+
   // --- VÉRIFICATION POUR L'INSCRIPTION ---
   async verifyRegisterCode(email: string, code: string) {
     const record = await this.codeModel.findOne({
@@ -136,6 +156,36 @@ export class AuthService {
     await this.codeModel.deleteOne({ _id: record._id }); // Suppression directe pour sécurité
 
     return { message: 'Compte activé avec succès.' };
+  }
+
+  // --- VÉRIFICATION POUR L'INSCRIPTION ---
+  async verifyCode(email: string, code: string) {
+    const record = await this.codeModel.findOne({
+      email,
+      type: 'PASSWORD_RESET',
+      isUsed: false,
+    });
+
+    if (!record) {
+      throw new BadRequestException('Code introuvable.');
+    }
+
+    // 1. AJOUT : Vérification stricte du temps d'expiration (15 minutes = 900 000 ms)
+    const expirationTimeMs = 15 * 60 * 1000;
+    const codeAgeMs = Date.now() - record.createdAt.getTime();
+
+    if (codeAgeMs > expirationTimeMs) {
+      throw new BadRequestException('Code expiré.');
+    }
+
+    // Comparer le code fourni avec le hash en BDD
+    const isMatch = await bcrypt.compare(code, record.code);
+    if (!isMatch) {
+      throw new BadRequestException('Code invalide.');
+    }
+
+    // OPTIMISATION : Message cohérent avec la réinitialisation de mot de passe
+    return { message: 'Code vérifié avec succès.', code: code };
   }
 
   // --- RÉINITIALISATION DU MOT DE PASSE ---
