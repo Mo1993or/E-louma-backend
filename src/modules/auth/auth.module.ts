@@ -44,11 +44,11 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
     MailerModule.forRoot({
       // Configuration du serveur SMTP (Mailtrap configuré)
       transport: {
-        host: 'sandbox.smtp.mailtrap.io',
-        port: 2525,
+        host: 'smtp.mail.ovh.net',
+        port: 465,
         auth: {
-          user: '10031761b2ebc4',
-          pass: '125ea5df9a393f',
+          user: 'contact@begglire.com',
+          pass: 'XzscF?%x@4K8^2V',
         },
       },
       // Configuration de l'expéditeur par défaut personnalisé pour E-Louma
