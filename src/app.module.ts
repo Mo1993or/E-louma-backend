@@ -9,6 +9,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { ReservationModule } from './modules/reservation/reservation.module';
 import { FavorisModule } from './modules/favoris/favoris.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -35,6 +36,8 @@ import { FavorisModule } from './modules/favoris/favoris.module';
     ReservationModule,
 
     FavorisModule,
+
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
