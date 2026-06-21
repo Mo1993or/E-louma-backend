@@ -8,20 +8,29 @@ import {
   HttpCode,
   HttpStatus,
   Post,
+  Put,
   Request,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 import { AuthService } from '../../services/auth/auth.service';
 import { RegisterDto } from '../../dto/register.dto';
 import { LoginDto } from '../../dto/login.dto';
+import { UpdateProfileDto } from '../../dto/update-profile.dto';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
 import { ForgotPasswordDto } from '../../dto/forgot-password.dto';
 import { ResetPasswordDto } from '../../dto/reset-password.dto';
+import { CloudinaryService } from 'src/shared/services/cloudinary.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Post('register')
   register(@Body() dto: RegisterDto) {
@@ -35,50 +44,52 @@ export class AuthController {
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  profile(@Request() req) {
-    return req.user;
+  async profile(@Request() req: any) {
+    return this.authService.getProfile(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put('profile')
+  @UseInterceptors(FileInterceptor('avatar'))
+  async updateProfile(
+    @Body() dto: UpdateProfileDto,
+    @UploadedFile() file: Express.Multer.File,
+    @Request() req: any,
+  ) {
+    let avatarUrl: string | undefined;
+    if (file) {
+      const result = await this.cloudinaryService.uploadImage(file);
+      if (result && 'secure_url' in result) {
+        avatarUrl = result.secure_url;
+      }
+    }
+    return this.authService.updateProfile(req.user.sub, dto, avatarUrl);
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('send-verification-code')
   @HttpCode(HttpStatus.OK)
-  async sendCode(@Body('email') email: string, @Request() req) {
-    console.log(req.user.sub);
-
+  async sendCode(@Body('email') email: string, @Request() req: any) {
     await this.authService.sendVerificationCode(req.user.sub, email);
-    return {
-      success: true,
-      message: 'Un code de validation vous a été envoyé.',
-    };
+    return { success: true, message: 'Un code de validation vous a ete envoye.' };
   }
+
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    await this.authService.generateAndSendCode(
-      forgotPasswordDto.email,
-      'PASSWORD_RESET',
-    );
+    await this.authService.generateAndSendCode(forgotPasswordDto.email, 'PASSWORD_RESET');
     return {
       success: true,
-      message:
-        'Si cet email existe, un code de réinitialisation vous a été envoyé.',
+      message: 'Si cet email existe, un code de reinitialisation vous a ete envoye.',
     };
   }
 
-  /**
-   * 2. Validation du code et changement de mot de passe
-   * Consomme le code et met à jour la base de données
-   */
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-    return await this.authService.resetPassword(resetPasswordDto);
+    return this.authService.resetPassword(resetPasswordDto);
   }
 
-  /**
-   * 3. Validation de compte (Inscription)
-   * Reçoit l'email et le code d'activation envoyé lors du register
-   */
   @Post('verify-account')
   @HttpCode(HttpStatus.OK)
   async verifyAccount(
@@ -86,21 +97,17 @@ export class AuthController {
     @Body('code') code: string,
   ) {
     if (!email || !code) {
-      throw new BadRequestException(
-        "L'email et le code de validation sont obligatoires.",
-      );
+      throw new BadRequestException("L'email et le code de validation sont obligatoires.");
     }
-    return await this.authService.verifyRegisterCode(email, code);
+    return this.authService.verifyRegisterCode(email, code);
   }
 
   @Post('verify-code')
   @HttpCode(HttpStatus.OK)
   async verifyCode(@Body('email') email: string, @Body('code') code: string) {
     if (!email || !code) {
-      throw new BadRequestException(
-        "L'email et le code de validation sont obligatoires.",
-      );
+      throw new BadRequestException("L'email et le code de validation sont obligatoires.");
     }
-    return await this.authService.verifyCode(email, code);
+    return this.authService.verifyCode(email, code);
   }
 }

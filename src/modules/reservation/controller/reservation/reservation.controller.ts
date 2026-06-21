@@ -3,6 +3,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -26,8 +27,20 @@ export class ReservationController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('users-reservations/:product')
-  async usersReservation(@Param('product') productId: string) {
+  @Get('seller')
+  async sellerReservations(@Request() req: any) {
+    return this.reservationService.getSellerReservations(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('buyer')
+  async buyerReservations(@Request() req: any) {
+    return this.reservationService.getBuyerReservations(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('product/:productId')
+  async productReservations(@Param('productId') productId: string) {
     return this.reservationService.findUsersReservation(productId);
   }
 
@@ -37,7 +50,15 @@ export class ReservationController {
     @Body() validateReservationDto: ValidateReservationDto,
     @Request() req: any,
   ) {
-    const userId = req.user.sub;
-    return this.reservationService.validate(validateReservationDto, userId);
+    return this.reservationService.validate(validateReservationDto, req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':reservationId')
+  async cancelReservation(
+    @Param('reservationId') reservationId: string,
+    @Request() req: any,
+  ) {
+    return this.reservationService.cancelReservation(reservationId, req.user.sub);
   }
 }

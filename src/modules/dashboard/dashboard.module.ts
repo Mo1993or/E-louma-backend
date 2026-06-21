@@ -7,18 +7,14 @@ import {
   Reservation,
   ReservationSchema,
 } from '../reservation/schemas/reservation.schema';
+import { User, UserSchema } from '../auth/schemas/user.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      {
-        name: Product.name,
-        schema: ProductSchema,
-      },
-      {
-        name: Reservation.name,
-        schema: ReservationSchema,
-      },
+      { name: Product.name, schema: ProductSchema },
+      { name: Reservation.name, schema: ReservationSchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   providers: [DashboardService],
