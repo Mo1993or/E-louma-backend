@@ -27,6 +27,7 @@ type JwtPayload = {
   sub: UserDocument['_id'];
   email: string;
   role: string;
+  fcmToken?: string;
 };
 
 @Injectable()
@@ -54,6 +55,7 @@ export class AuthService {
       sub: user._id,
       email: user.email,
       role: user.role,
+      fcmToken: user.fcmToken,
     };
     const accessToken = this.jwtService.sign(payload);
     return { message: 'User created', user, accessToken };
@@ -68,6 +70,11 @@ export class AuthService {
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
+    await this.userModel.updateOne(
+      { _id: new Types.ObjectId(user._id) },
+      { $set: { fcmToken: data.fcmToken } },
+    );
+
     const payload: JwtPayload = {
       sub: user._id,
       email: user.email,
