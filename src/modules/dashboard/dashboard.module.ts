@@ -1,20 +1,23 @@
 import { Module } from '@nestjs/common';
-import { FavorisController } from './controller/favoris/favoris.controller';
-import { Favoris, FavorisSchema } from './schemas/favoris.schema';
+import { DashboardService } from './dashboard.service';
+import { DashboardController } from './dashboard.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { FavorisService } from './service/favoris/favoris.service';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
+import {
+  Reservation,
+  ReservationSchema,
+} from '../reservation/schemas/reservation.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: Favoris.name, schema: FavorisSchema },
       { name: Product.name, schema: ProductSchema },
+      { name: Reservation.name, schema: ReservationSchema },
       { name: User.name, schema: UserSchema },
     ]),
   ],
-  controllers: [FavorisController],
-  providers: [FavorisService],
+  providers: [DashboardService],
+  controllers: [DashboardController],
 })
-export class FavorisModule {}
+export class DashboardModule {}

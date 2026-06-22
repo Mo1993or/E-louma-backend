@@ -15,34 +15,26 @@ import {
 import { MailerModule } from '@nestjs-modules/mailer';
 import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
+import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 
 @Module({
   imports: [
     PassportModule,
-
-    ConfigModule.forRoot(), // Assurez-vous que le ConfigModule est présent
+    CloudinaryModule,
+    ConfigModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET'), // Injecté proprement
+        secret: configService.get<string>('JWT_SECRET'),
         signOptions: { expiresIn: '365d' },
       }),
     }),
-
     MongooseModule.forFeature([
-      {
-        name: User.name,
-        schema: UserSchema,
-      },
-      {
-        name: VerificationCode.name,
-        schema: VerificationCodeSchema,
-      },
+      { name: User.name, schema: UserSchema },
+      { name: VerificationCode.name, schema: VerificationCodeSchema },
     ]),
-
     MailerModule.forRoot({
-      // Configuration du serveur SMTP (Mailtrap configuré)
       transport: {
         host: 'smtp.mail.ovh.net',
         port: 465,
@@ -51,17 +43,13 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
           pass: 'XzscF?%x@4K8^2V',
         },
       },
-      // Configuration de l'expéditeur par défaut personnalisé pour E-Louma
       defaults: {
         from: '"E-Louma" <noreply@e-louma.com>',
       },
-      // Configuration des templates
       template: {
-        dir: join(__dirname, 'templates'), // Dossier : src/votre-module/templates
+        dir: join(__dirname, 'templates'),
         adapter: new HandlebarsAdapter(),
-        options: {
-          strict: true,
-        },
+        options: { strict: true },
       },
     }),
   ],

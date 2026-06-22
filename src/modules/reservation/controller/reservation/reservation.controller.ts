@@ -1,6 +1,23 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+/* eslint-disable prettier/prettier */
+ 
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+ 
+
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { ReservationService } from '../../services/reservation/reservation.service';
-import { CreateReservationDto } from '../../dto/create-reservation.dto';
+import {
+  CreateReservationDto,
+  ValidateReservationDto,
+} from '../../dto/create-reservation.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 
 @Controller('reservation')
@@ -13,8 +30,38 @@ export class ReservationController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('users-reservations/:product')
-  async usersReservation(@Param('product') productId: string) {
+  @Get('seller')
+  async sellerReservations(@Request() req: any) {
+    return this.reservationService.getSellerReservations(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('buyer')
+  async buyerReservations(@Request() req: any) {
+    return this.reservationService.getBuyerReservations(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('product/:productId')
+  async productReservations(@Param('productId') productId: string) {
     return this.reservationService.findUsersReservation(productId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('validate')
+  async validateReservation(
+    @Body() validateReservationDto: ValidateReservationDto,
+    @Request() req: any,
+  ) {
+    return this.reservationService.validate(validateReservationDto, req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':reservationId')
+  async cancelReservation(
+    @Param('reservationId') reservationId: string,
+    @Request() req: any,
+  ) {
+    return this.reservationService.cancelReservation(reservationId, req.user.sub);
   }
 }

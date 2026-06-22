@@ -4,6 +4,7 @@ import { ReservationController } from './controller/reservation/reservation.cont
 import { MongooseModule } from '@nestjs/mongoose';
 import { Reservation, ReservationSchema } from './schemas/reservation.schema';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
+import { User, UserSchema } from '../auth/schemas/user.schema';
 
 @Module({
   imports: [
@@ -15,6 +16,10 @@ import { Product, ProductSchema } from '../products/schemas/product.schema';
       {
         name: Product.name,
         schema: ProductSchema,
+      },
+      {
+        name: User.name,
+        schema: UserSchema,
       },
     ]),
   ],

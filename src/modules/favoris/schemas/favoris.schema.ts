@@ -1,22 +1,30 @@
 /* eslint-disable prettier/prettier */
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type FavorisDocument = HydratedDocument<Favoris>;
 
 @Schema({
-    timestamps: true,
+  timestamps: true,
 })
 export class Favoris {
-    @Prop({
-        required: true,
-    })
-    user!: string;
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+    index: true,
+  })
+  user!: Types.ObjectId;
 
-    @Prop({
-        required: true,
-    })
-    product!: string;    
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Product',
+    required: true,
+    index: true,
+  })
+  product!: Types.ObjectId;
 }
 
 export const FavorisSchema = SchemaFactory.createForClass(Favoris);
+
+FavorisSchema.index({ user: 1, product: 1 }, { unique: true });
