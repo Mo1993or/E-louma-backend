@@ -6,6 +6,8 @@ import {
   Product,
   ProductDocument,
 } from 'src/modules/products/schemas/product.schema';
+import { User, UserDocument } from 'src/modules/auth/schemas/user.schema';
+import { NotificationService } from 'src/modules/notification/notification.service';
 
 @Injectable()
 export class FavorisService {
@@ -14,6 +16,9 @@ export class FavorisService {
     private readonly favorisModel: Model<FavorisDocument>,
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async addFavoris(user: string, product: string) {
@@ -26,6 +31,20 @@ export class FavorisService {
       { _id: new Types.ObjectId(product) },
       { $inc: { favoritesCount: 1 } },
     );
+
+    const productDoc = await this.productModel.findById(product).lean();
+    if (productDoc?.seller) {
+      const seller = await this.userModel.findById(productDoc.seller).lean();
+      if (seller?.fcmToken) {
+        this.notificationService.sendToDevice(
+          seller.fcmToken,
+          'Nouveau favori',
+          `Quelqu'un a ajoute "${productDoc.title}" a ses favoris`,
+          { type: 'NEW_FAVORITE', productId: product },
+        );
+      }
+    }
+
     return { message: 'Favoris ajoute' };
   }
 

@@ -1,5 +1,8 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable prettier/prettier */
+ 
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
+ 
+
 import {
   Body,
   Controller,

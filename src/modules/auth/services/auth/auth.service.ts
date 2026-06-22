@@ -178,6 +178,14 @@ export class AuthService {
     return user;
   }
 
+  async updateFcmToken(userId: string, fcmToken: string) {
+    await this.userModel.updateOne(
+      { _id: new Types.ObjectId(userId) },
+      { fcmToken },
+    );
+    return { message: 'Token FCM mis a jour' };
+  }
+
   async updateProfile(
     userId: string,
     dto: UpdateProfileDto,

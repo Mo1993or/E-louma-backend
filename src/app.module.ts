@@ -10,6 +10,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { ReservationModule } from './modules/reservation/reservation.module';
 import { FavorisModule } from './modules/favoris/favoris.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -26,6 +27,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
         uri: configService.get<string>('mongoUri'),
       }),
     }),
+
+    NotificationModule,
 
     AuthModule,
 

@@ -4,12 +4,14 @@ import { Favoris, FavorisSchema } from './schemas/favoris.schema';
 import { MongooseModule } from '@nestjs/mongoose';
 import { FavorisService } from './service/favoris/favoris.service';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
+import { User, UserSchema } from '../auth/schemas/user.schema';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Favoris.name, schema: FavorisSchema },
       { name: Product.name, schema: ProductSchema },
+      { name: User.name, schema: UserSchema },
     ]),
   ],
   controllers: [FavorisController],

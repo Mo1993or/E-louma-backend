@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
@@ -67,20 +68,40 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Put('fcm-token')
+  @HttpCode(HttpStatus.OK)
+  async updateFcmToken(
+    @Body('fcmToken') fcmToken: string,
+    @Request() req: any,
+  ) {
+    if (!fcmToken) {
+      throw new BadRequestException('Le token FCM est requis.');
+    }
+    return await this.authService.updateFcmToken(req.user.sub, fcmToken);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('send-verification-code')
   @HttpCode(HttpStatus.OK)
   async sendCode(@Body('email') email: string, @Request() req: any) {
     await this.authService.sendVerificationCode(req.user.sub, email);
-    return { success: true, message: 'Un code de validation vous a ete envoye.' };
+    return {
+      success: true,
+      message: 'Un code de validation vous a ete envoye.',
+    };
   }
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
-    await this.authService.generateAndSendCode(forgotPasswordDto.email, 'PASSWORD_RESET');
+    await this.authService.generateAndSendCode(
+      forgotPasswordDto.email,
+      'PASSWORD_RESET',
+    );
     return {
       success: true,
-      message: 'Si cet email existe, un code de reinitialisation vous a ete envoye.',
+      message:
+        'Si cet email existe, un code de reinitialisation vous a ete envoye.',
     };
   }
 
@@ -97,7 +118,9 @@ export class AuthController {
     @Body('code') code: string,
   ) {
     if (!email || !code) {
-      throw new BadRequestException("L'email et le code de validation sont obligatoires.");
+      throw new BadRequestException(
+        "L'email et le code de validation sont obligatoires.",
+      );
     }
     return this.authService.verifyRegisterCode(email, code);
   }
@@ -106,7 +129,9 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async verifyCode(@Body('email') email: string, @Body('code') code: string) {
     if (!email || !code) {
-      throw new BadRequestException("L'email et le code de validation sont obligatoires.");
+      throw new BadRequestException(
+        "L'email et le code de validation sont obligatoires.",
+      );
     }
     return this.authService.verifyCode(email, code);
   }

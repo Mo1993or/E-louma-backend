@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-floating-promises */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import {
   BadRequestException,
   ForbiddenException,
@@ -18,7 +20,9 @@ import {
   Product,
   ProductDocument,
 } from 'src/modules/products/schemas/product.schema';
+import { User, UserDocument } from 'src/modules/auth/schemas/user.schema';
 import { ProductStatus } from 'src/shared/enums/product.enums';
+import { NotificationService } from 'src/modules/notification/notification.service';
 
 @Injectable()
 export class ReservationService {
@@ -27,6 +31,9 @@ export class ReservationService {
     private readonly reservationModel: Model<ReservationDocument>,
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>,
+    private readonly notificationService: NotificationService,
   ) {}
 
   async addReservation(createReservationDto: CreateReservationDto) {
@@ -44,6 +51,17 @@ export class ReservationService {
       { _id: product._id },
       { $inc: { reservations: 1 }, status: ProductStatus.RESERVED },
     );
+
+    const seller = await this.userModel.findById(product.seller).lean();
+    if (seller?.fcmToken) {
+      this.notificationService.sendToDevice(
+        seller.fcmToken,
+        'Nouvelle reservation',
+        `${createReservationDto.fullname} a reserve votre produit "${product.title}"`,
+        { type: 'NEW_RESERVATION', productId: product._id.toString() },
+      );
+    }
+
     return { message: 'Reservation effectuee', reservation };
   }
 
@@ -78,7 +96,10 @@ export class ReservationService {
       .exec();
   }
 
-  async validate(validateReservationDto: ValidateReservationDto, userId: string) {
+  async validate(
+    validateReservationDto: ValidateReservationDto,
+    userId: string,
+  ) {
     const reservation = await this.reservationModel.findById(
       new Types.ObjectId(validateReservationDto.reservationId),
     );
@@ -98,6 +119,19 @@ export class ReservationService {
       { _id: product._id },
       { status: ProductStatus.SOLD },
     );
+
+    if (reservation.user) {
+      const buyer = await this.userModel.findById(reservation.user).lean();
+      if (buyer?.fcmToken) {
+        this.notificationService.sendToDevice(
+          buyer.fcmToken,
+          'Reservation confirmee',
+          `Votre reservation pour "${product.title}" a ete validee par le vendeur`,
+          { type: 'RESERVATION_VALIDATED', productId: product._id.toString() },
+        );
+      }
+    }
+
     return { message: 'Reservation validee avec succes', product };
   }
 
@@ -119,7 +153,31 @@ export class ReservationService {
       );
     }
 
-    await this.reservationModel.findByIdAndDelete(new Types.ObjectId(reservationId));
+    await this.reservationModel.findByIdAndDelete(
+      new Types.ObjectId(reservationId),
+    );
+
+    if (isSeller && reservation.user) {
+      const buyer = await this.userModel.findById(reservation.user).lean();
+      if (buyer?.fcmToken) {
+        this.notificationService.sendToDevice(
+          buyer.fcmToken,
+          'Reservation annulee',
+          `Le vendeur a annule votre reservation pour "${product.title}"`,
+          { type: 'RESERVATION_CANCELLED', productId: product._id.toString() },
+        );
+      }
+    } else if (isBuyer) {
+      const seller = await this.userModel.findById(product.seller).lean();
+      if (seller?.fcmToken) {
+        this.notificationService.sendToDevice(
+          seller.fcmToken,
+          'Reservation annulee',
+          `Un acheteur a annule sa reservation pour "${product.title}"`,
+          { type: 'RESERVATION_CANCELLED', productId: product._id.toString() },
+        );
+      }
+    }
 
     const remainingReservations = await this.reservationModel.countDocuments({
       product: product._id,

@@ -46,6 +46,11 @@ export class User {
     required: false,
   })
   avatar?: string;
+
+  @Prop({
+    required: false,
+  })
+  fcmToken?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
