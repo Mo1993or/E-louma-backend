@@ -24,8 +24,15 @@ import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 export class ReservationController {
   constructor(private readonly reservationService: ReservationService) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post('add')
-  async createReservation(@Body() createReservationDto: CreateReservationDto) {
+  async createReservation(
+    @Body() createReservationDto: CreateReservationDto,
+    @Request() req: any,
+  ) {
+    if (!createReservationDto.user) {
+      createReservationDto.user = req.user.sub;
+    }
     return this.reservationService.addReservation(createReservationDto);
   }
 

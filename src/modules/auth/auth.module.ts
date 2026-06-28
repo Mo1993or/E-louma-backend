@@ -27,30 +27,37 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '365d' },
+        signOptions: { expiresIn: '30d' },
       }),
     }),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
       { name: VerificationCode.name, schema: VerificationCodeSchema },
     ]),
-    MailerModule.forRoot({
-      transport: {
-        host: 'smtp.mail.ovh.net',
-        port: 465,
-        auth: {
-          user: 'contact@begglire.com',
-          pass: 'XzscF?%x@4K8^2V',
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get<string>('MAIL_HOST', 'smtp.mail.ovh.net'),
+          port: configService.get<number>('MAIL_PORT', 465),
+          auth: {
+            user: configService.get<string>('MAIL_USER'),
+            pass: configService.get<string>('MAIL_PASS'),
+          },
         },
-      },
-      defaults: {
-        from: '"E-Louma" <noreply@e-louma.com>',
-      },
-      template: {
-        dir: join(__dirname, 'templates'),
-        adapter: new HandlebarsAdapter(),
-        options: { strict: true },
-      },
+        defaults: {
+          from: configService.get<string>(
+            'MAIL_FROM',
+            '"E-Louma" <noreply@e-louma.com>',
+          ),
+        },
+        template: {
+          dir: join(__dirname, 'templates'),
+          adapter: new HandlebarsAdapter(),
+          options: { strict: true },
+        },
+      }),
     }),
   ],
   controllers: [AuthController],

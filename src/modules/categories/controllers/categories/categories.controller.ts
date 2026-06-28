@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable prettier/prettier */
-import { Body, Controller, Get, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CategoriesService } from '../../services/categories/categories.service';
 import { CategorieDto } from '../../dto/categorie.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from 'src/shared/services/cloudinary.service';
+import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 
 @Controller('categories')
 export class CategoriesController {
@@ -13,6 +14,7 @@ export class CategoriesController {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  @UseGuards(JwtAuthGuard)
   @Post('store')
   @UseInterceptors(FileInterceptor('image'))
   async store(

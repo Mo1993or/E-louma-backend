@@ -1,6 +1,8 @@
 # TODO - E-louma
 
-- Validation mail par code
-- Mot de passe oublier (send code)
-- Ajouter photo profile
+- [x] Validation mail par code
+- [x] Mot de passe oublier (send code)
+- [x] Ajouter photo profile
+- [x] Notification push a la connexion
+- [x] Endpoint envoi de notification personnalise
 

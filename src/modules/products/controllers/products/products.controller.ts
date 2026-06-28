@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Controller,
@@ -47,7 +46,11 @@ export class ProductsController {
       });
     }
     const sellerId = new Types.ObjectId(req.user.sub);
-    return this.productsService.addProduct(createProductDto, imageUrls, sellerId);
+    return this.productsService.addProduct(
+      createProductDto,
+      imageUrls,
+      sellerId,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
@@ -65,7 +68,8 @@ export class ProductsController {
         files.map((file) => this.cloudinaryService.uploadImage(file)),
       );
       uploadResults.forEach((result) => {
-        if (result && 'secure_url' in result) newImageUrls.push(result.secure_url);
+        if (result && 'secure_url' in result)
+          newImageUrls.push(result.secure_url);
       });
     }
     return this.productsService.updateProduct(
@@ -99,8 +103,14 @@ export class ProductsController {
   }
 
   @Get('index')
-  async findAllProductAvalaible() {
-    return this.productsService.getAllProduct();
+  async findAllProductAvalaible(
+    @Query('cursor') cursor?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.productsService.getAllProduct(
+      cursor,
+      limit ? parseInt(limit, 10) : 20,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
