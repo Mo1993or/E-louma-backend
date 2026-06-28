@@ -74,13 +74,13 @@ export class NotificationService implements OnModuleInit {
       return true;
     } catch (error: any) {
       this.logger.error(`Echec envoi notification: ${error.message}`);
-      if (INVALID_TOKEN_CODES.includes(error.code)) {
+      /* if (INVALID_TOKEN_CODES.includes(error.code)) {
         this.logger.warn(`Token FCM invalide, nettoyage du token en base...`);
         await this.userModel.updateMany(
           { fcmToken },
           { $unset: { fcmToken: '' } },
         );
-      }
+      } */
       return false;
     }
   }
