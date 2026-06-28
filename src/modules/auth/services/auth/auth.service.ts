@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   BadRequestException,
   Injectable,
@@ -22,6 +23,7 @@ import {
 } from '../../schemas/verification-code.schema';
 import { MailerService } from '@nestjs-modules/mailer';
 import { ResetPasswordDto } from '../../dto/reset-password.dto';
+import { NotificationService } from 'src/modules/notification/notification.service';
 
 type JwtPayload = {
   sub: UserDocument['_id'];
@@ -39,13 +41,19 @@ export class AuthService {
     private codeModel: Model<VerificationCodeDocument>,
     private jwtService: JwtService,
     private mailerService: MailerService,
+    private notificationService: NotificationService,
   ) {}
 
   async register(data: RegisterDto) {
-    const existingUser = await this.userModel.findOne({ email: data.email });
-    if (existingUser) {
-      throw new BadRequestException('Email already exists');
-    }
+    const existingEmail = await this.userModel.findOne({ email: data.email });
+    if (existingEmail) throw new BadRequestException('Email already exists');
+
+    const existingPhoneNumber = await this.userModel.findOne({
+      phonenumber: data.phonenumber,
+    });
+    if (existingPhoneNumber)
+      throw new BadRequestException('PhoneNumber already exists');
+
     const hashedPassword = await bcrypt.hash(data.password, 10);
     const user = await this.userModel.create({
       ...data,
@@ -58,7 +66,8 @@ export class AuthService {
       fcmToken: user.fcmToken,
     };
     const accessToken = this.jwtService.sign(payload);
-    return { message: 'User created', user, accessToken };
+    const { password: _pw, ...userWithoutPassword } = user.toObject();
+    return { message: 'User created', user: userWithoutPassword, accessToken };
   }
 
   async login(data: LoginDto) {
@@ -81,7 +90,20 @@ export class AuthService {
       role: user.role,
     };
     const accessToken = this.jwtService.sign(payload);
-    return { accessToken, user };
+
+    const fcmToken = data.fcmToken || user.fcmToken;
+    if (fcmToken) {
+      // eslint-disable-next-line @typescript-eslint/no-floating-promises
+      this.notificationService.sendToDevice(
+        fcmToken,
+        'Connexion reussie',
+        `Bienvenue ${user.fullname} ! Vous etes connecte a E-Louma.`,
+        { type: 'LOGIN_SUCCESS' },
+      );
+    }
+
+    const { password: _pw, ...userWithoutPassword } = user.toObject();
+    return { accessToken, user: userWithoutPassword };
   }
 
   async generateAndSendCode(
@@ -112,10 +134,13 @@ export class AuthService {
     const user = await this.userModel.findOne({
       _id: new Types.ObjectId(userId),
     });
-    if (user && user.isVerified) {
-      return await this.generateAndSendCode(email, 'REGISTER');
+    if (!user) {
+      throw new BadRequestException('Utilisateur introuvable');
     }
-    throw new BadRequestException('Utilisateur introuvable');
+    if (user.isVerified) {
+      throw new BadRequestException('Compte deja verifie.');
+    }
+    return await this.generateAndSendCode(email, 'REGISTER');
   }
 
   async verifyRegisterCode(email: string, code: string) {
@@ -131,7 +156,7 @@ export class AuthService {
     if (!isMatch) {
       throw new BadRequestException('Code incorrect.');
     }
-    await this.userModel.updateOne({ email }, { isActive: true });
+    await this.userModel.updateOne({ email }, { isVerified: true });
     await this.codeModel.deleteOne({ _id: record._id });
     return { message: 'Compte active avec succes.' };
   }

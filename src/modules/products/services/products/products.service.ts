@@ -48,12 +48,25 @@ export class ProductsService {
     return products;
   }
 
-  async getAllProduct(): Promise<ProductDocument[]> {
-    return this.productModel
-      .find({ status: ProductStatus.AVAILABLE })
+  async getAllProduct(cursor?: string, limit = 20) {
+    const filter: Record<string, any> = {};
+    if (cursor && Types.ObjectId.isValid(cursor)) {
+      filter._id = { $lt: new Types.ObjectId(cursor) };
+    }
+    const products = await this.productModel
+      .find(filter)
       .populate('category')
-      .sort({ createdAt: -1 })
+      .sort({ _id: -1 })
+      .limit(limit + 1)
       .exec();
+    const hasMore = products.length > limit;
+    if (hasMore) products.pop();
+    const nextCursor = hasMore ? products[products.length - 1]._id.toString() : null;
+    return {
+      products,
+      nextCursor,
+      hasMore,
+    };
   }
 
   async getAllProductsOwer(userId: string): Promise<ProductDocument[]> {
