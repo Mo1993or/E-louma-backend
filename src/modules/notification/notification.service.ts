@@ -5,8 +5,6 @@ import { Model, Types } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getMessaging, Messaging } from 'firebase-admin/messaging';
-import { readFileSync, existsSync } from 'fs';
-import { join } from 'path';
 import { User, UserDocument } from '../auth/schemas/user.schema';
 
 const INVALID_TOKEN_CODES = [
@@ -32,29 +30,6 @@ export class NotificationService implements OnModuleInit {
       return;
     }
 
-    const credentialsPath = this.configService.get<string>(
-      'GOOGLE_APPLICATION_CREDENTIALS',
-      join(process.cwd(), 'google-credentials.json'),
-    );
-
-    if (existsSync(credentialsPath)) {
-      try {
-        const serviceAccount = JSON.parse(
-          readFileSync(credentialsPath, 'utf-8'),
-        );
-        const app = initializeApp({
-          credential: cert(serviceAccount),
-        });
-        this.messaging = getMessaging(app);
-        console.log('Firebase initialise depuis le fichier credentials');
-        this.logger.log('Firebase initialise depuis le fichier credentials');
-        return;
-      } catch (error: any) {
-        this.logger.error(`Erreur lecture credentials: ${error.message}`);
-        console.error(`Erreur lecture credentials: ${error.message}`);
-      }
-    }
-
     const projectId = this.configService.get<string>('FIREBASE_PROJECT_ID');
     const clientEmail = this.configService.get<string>('FIREBASE_CLIENT_EMAIL');
     const privateKey = this.configService
@@ -73,7 +48,6 @@ export class NotificationService implements OnModuleInit {
     });
     this.messaging = getMessaging(app);
     this.logger.log('Firebase initialise depuis les variables env');
-    console.log('Firebase initialise depuis les variables env');
   }
 
   async sendToDevice(
