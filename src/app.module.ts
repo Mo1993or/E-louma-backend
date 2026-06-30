@@ -28,9 +28,7 @@ import { NotificationModule } from './modules/notification/notification.module';
       }),
     }),
 
-    ThrottlerModule.forRoot([
-      { ttl: 60000, limit: 60 },
-    ]),
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 60 }]),
 
     NotificationModule,
     AuthModule,
@@ -41,9 +39,6 @@ import { NotificationModule } from './modules/notification/notification.module';
     DashboardModule,
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-    { provide: APP_GUARD, useClass: ThrottlerGuard },
-  ],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

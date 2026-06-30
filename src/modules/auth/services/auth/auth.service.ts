@@ -24,6 +24,7 @@ import {
 import { MailerService } from '@nestjs-modules/mailer';
 import { ResetPasswordDto } from '../../dto/reset-password.dto';
 import { NotificationService } from 'src/modules/notification/notification.service';
+import { NotificationType } from 'src/modules/notification/dto/send-notification.dto';
 
 type JwtPayload = {
   sub: UserDocument['_id'];
@@ -93,12 +94,11 @@ export class AuthService {
 
     const fcmToken = data.fcmToken || user.fcmToken;
     if (fcmToken) {
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
-      this.notificationService.sendToDevice(
+      await this.notificationService.sendToDevice(
         fcmToken,
         'Connexion reussie',
         `Bienvenue ${user.fullname} ! Vous etes connecte a E-Louma.`,
-        { type: 'LOGIN_SUCCESS' },
+        NotificationType.SUCCESS,
       );
     }
 
