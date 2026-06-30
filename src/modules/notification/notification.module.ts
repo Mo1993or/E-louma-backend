@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { NotificationService } from './notification.service';
 import { NotificationController } from './notification.controller';
 import { User, UserSchema } from '../auth/schemas/user.schema';
+import { firebaseAdminProvider } from './firebase-admin.provider';
 
 @Global()
 @Module({
@@ -10,7 +11,7 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [NotificationController],
-  providers: [NotificationService],
+  providers: [firebaseAdminProvider, NotificationService],
   exports: [NotificationService],
 })
 export class NotificationModule {}

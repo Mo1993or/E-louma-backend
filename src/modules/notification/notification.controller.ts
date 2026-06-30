@@ -9,7 +9,10 @@ import {
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { NotificationService } from './notification.service';
-import { SendNotificationDto } from './dto/send-notification.dto';
+import {
+  NotificationType,
+  SendNotificationDto,
+} from './dto/send-notification.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from '../auth/schemas/user.schema';
 import { Model, Types } from 'mongoose';
@@ -56,7 +59,7 @@ export class NotificationController {
       targetFcmToken,
       dto.title,
       dto.body,
-      { type: 'CUSTOM', senderId: req.user.sub },
+      NotificationType.MESSAGE,
     );
 
     if (!sent) {
@@ -90,7 +93,7 @@ export class NotificationController {
       user.fcmToken,
       'Connexion reussie',
       `Bienvenue ${user.fullname} ! Vous etes maintenant connecte a E-Louma.`,
-      { type: 'LOGIN_SUCCESS' },
+      NotificationType.SUCCESS,
     );
 
     if (!sent) {
@@ -102,5 +105,10 @@ export class NotificationController {
     }
 
     return { success: true, message: 'Notification de connexion envoyee' };
+  }
+
+  @Post('test-notification')
+  async testSendNotification(@Body() pushNotification: SendNotificationDto) {
+    await this.notificationService.sendPush(pushNotification);
   }
 }

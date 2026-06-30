@@ -9,6 +9,7 @@ import {
 } from 'src/modules/products/schemas/product.schema';
 import { User, UserDocument } from 'src/modules/auth/schemas/user.schema';
 import { NotificationService } from 'src/modules/notification/notification.service';
+import { NotificationType } from 'src/modules/notification/dto/send-notification.dto';
 
 @Injectable()
 export class FavorisService {
@@ -41,7 +42,7 @@ export class FavorisService {
           seller.fcmToken,
           'Nouveau favori',
           `Quelqu'un a ajoute "${productDoc.title}" a ses favoris`,
-          { type: 'NEW_FAVORITE', productId: product },
+          NotificationType.MESSAGE,
         );
       }
     }

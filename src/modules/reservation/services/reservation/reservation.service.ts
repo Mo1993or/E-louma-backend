@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 import {
   BadRequestException,
   ForbiddenException,
@@ -23,6 +23,7 @@ import {
 import { User, UserDocument } from 'src/modules/auth/schemas/user.schema';
 import { ProductStatus } from 'src/shared/enums/product.enums';
 import { NotificationService } from 'src/modules/notification/notification.service';
+import { NotificationType } from 'src/modules/notification/dto/send-notification.dto';
 
 @Injectable()
 export class ReservationService {
@@ -58,7 +59,7 @@ export class ReservationService {
         seller.fcmToken,
         'Nouvelle reservation',
         `${createReservationDto.fullname} a reserve votre produit "${product.title}"`,
-        { type: 'NEW_RESERVATION', productId: product._id.toString() },
+        NotificationType.SUCCESS,
       );
     }
 
@@ -127,7 +128,7 @@ export class ReservationService {
           buyer.fcmToken,
           'Reservation confirmee',
           `Votre reservation pour "${product.title}" a ete validee par le vendeur`,
-          { type: 'RESERVATION_VALIDATED', productId: product._id.toString() },
+          NotificationType.SUCCESS,
         );
       }
     }
@@ -164,7 +165,7 @@ export class ReservationService {
           buyer.fcmToken,
           'Reservation annulee',
           `Le vendeur a annule votre reservation pour "${product.title}"`,
-          { type: 'RESERVATION_CANCELLED', productId: product._id.toString() },
+          NotificationType.MESSAGE,
         );
       }
     } else if (isBuyer) {
@@ -174,7 +175,7 @@ export class ReservationService {
           seller.fcmToken,
           'Reservation annulee',
           `Un acheteur a annule sa reservation pour "${product.title}"`,
-          { type: 'RESERVATION_CANCELLED', productId: product._id.toString() },
+          NotificationType.MESSAGE,
         );
       }
     }
