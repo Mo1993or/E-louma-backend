@@ -7,7 +7,11 @@ export type ReservationDocument = HydratedDocument<Reservation>;
 @Schema({
     timestamps: true,
 })
+/**
+ * Représente une réservation persistée en base (collection Mongoose).
+ */
 export class Reservation {
+
     @Prop({
         required: true,
     })
@@ -46,4 +50,8 @@ export class Reservation {
     quantity!: string;
 }
 
+/**
+ * Génère le schéma Mongoose à partir de la classe `Reservation`.
+ */
 export const ReservationSchema = SchemaFactory.createForClass(Reservation);
+

@@ -7,6 +7,9 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
+/**
+ * DTO de création d'une réservation.
+ */
 export class CreateReservationDto {
   @IsString()
   @IsNotEmpty()
@@ -38,12 +41,15 @@ export class CreateReservationDto {
   quantity!: string;
 }
 
+/**
+ * DTO de validation d'une réservation.
+ */
 export class ValidateReservationDto {
   @IsString()
   @IsNotEmpty()
   product!: string;
 
-  @IsString()
+  /* @IsString()
   @IsNotEmpty()
-  reservationId!: string;
+  reservationId!: string; */
 }

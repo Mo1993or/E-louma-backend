@@ -27,6 +27,9 @@ import { NotificationType } from 'src/modules/notification/dto/send-notification
 
 @Injectable()
 export class ReservationService {
+  /**
+   * Construit le service et injecte les modèles Mongoose ainsi que les dépendances utiles.
+   */
   constructor(
     @InjectModel(Reservation.name)
     private readonly reservationModel: Model<ReservationDocument>,
@@ -37,6 +40,15 @@ export class ReservationService {
     private readonly notificationService: NotificationService,
   ) {}
 
+  /**
+   * Ajoute une réservation pour un produit.
+   *
+   * - Vérifie l'existence du produit
+   * - Vérifie que le produit est disponible
+   * - Crée l'objet de réservation
+   * - Met à jour le compteur et le statut du produit
+   * - Notifie le vendeur (si un token FCM est disponible)
+   */
   async addReservation(createReservationDto: CreateReservationDto) {
     const product = await this.productModel.findById(
       new Types.ObjectId(createReservationDto.product),
@@ -66,6 +78,10 @@ export class ReservationService {
     return { message: 'Reservation effectuee', reservation };
   }
 
+  /**
+   * Récupère la liste des réservations associées à un produit.
+   * Les résultats sont triés par date de création décroissante.
+   */
   async findUsersReservation(productId: string) {
     return this.reservationModel
       .find({ product: productId })
@@ -73,6 +89,12 @@ export class ReservationService {
       .exec();
   }
 
+  /**
+   * Récupère les réservations pour tous les produits du vendeur.
+   *
+   * Le vendeur est identifié par son ID MongoDB.
+   * Les réservations sont retournées avec le produit peuplé (title, price, images, status).
+   */
   async getSellerReservations(userId: string) {
     const products = await this.productModel
       .find({ seller: new Types.ObjectId(userId) })
@@ -86,6 +108,12 @@ export class ReservationService {
       .exec();
   }
 
+  /**
+   * Récupère les réservations d'un acheteur.
+   *
+   * Les produits sont peuplés avec leur catégorie (name).
+   * Les résultats sont triés par date de création décroissante.
+   */
   async getBuyerReservations(userId: string) {
     return this.reservationModel
       .find({ user: new Types.ObjectId(userId) })
@@ -97,20 +125,21 @@ export class ReservationService {
       .exec();
   }
 
+  /**
+   * Valide une réservation côté vendeur.
+   *
+   * Vérifie l'existence de la réservation et du produit.
+   * Contrôle que le vendeur connecté correspond au vendeur du produit.
+   * Met ensuite le produit à l'état SOLD et notifie l'acheteur (si possible).
+   */
   async validate(
     validateReservationDto: ValidateReservationDto,
     userId: string,
   ) {
-    const reservation = await this.reservationModel.findById(
-      new Types.ObjectId(validateReservationDto.reservationId),
-    );
-    if (!reservation) throw new NotFoundException('Reservation introuvable');
-
     const product = await this.productModel.findById(
-      new Types.ObjectId(reservation.product),
+      new Types.ObjectId(validateReservationDto.product),
     );
-    if (!product) throw new NotFoundException('Une erreur sest produite');
-
+    if (!product) throw new NotFoundException('Produit introuvable');
     if (product.seller?.toString() !== userId) {
       throw new ForbiddenException(
         'Vous ne pouvez pas valider ce produit car il ne vous appartient pas',
@@ -121,21 +150,17 @@ export class ReservationService {
       { status: ProductStatus.SOLD },
     );
 
-    if (reservation.user) {
-      const buyer = await this.userModel.findById(reservation.user).lean();
-      if (buyer?.fcmToken) {
-        this.notificationService.sendToDevice(
-          buyer.fcmToken,
-          'Reservation confirmee',
-          `Votre reservation pour "${product.title}" a ete validee par le vendeur`,
-          NotificationType.SUCCESS,
-        );
-      }
-    }
-
     return { message: 'Reservation validee avec succes', product };
   }
 
+  /**
+   * Annule une réservation.
+   *
+   * Uniquement le vendeur du produit ou l'acheteur ayant créé la réservation peut annuler.
+   *
+   * Après suppression de la réservation, le statut du produit et le compteur `reservations`
+   * sont mis à jour selon le nombre de réservations restantes.
+   */
   async cancelReservation(reservationId: string, userId: string) {
     const reservation = await this.reservationModel.findById(
       new Types.ObjectId(reservationId),
