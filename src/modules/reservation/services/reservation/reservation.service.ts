@@ -54,8 +54,10 @@ export class ReservationService {
       new Types.ObjectId(createReservationDto.product),
     );
     if (!product) throw new NotFoundException('Produit introuvable');
-    if (product.status !== ProductStatus.AVAILABLE) {
-      throw new BadRequestException('Ce produit nest plus disponible');
+    if (product.status === ProductStatus.SOLD) {
+      throw new BadRequestException(
+        'Ce produit nest plus disponible pour la vente',
+      );
     }
     const reservation = await this.reservationModel.create({
       ...createReservationDto,
