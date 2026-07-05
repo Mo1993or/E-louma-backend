@@ -92,15 +92,12 @@ export class AuthService {
     };
     const accessToken = this.jwtService.sign(payload);
 
-    const fcmToken = data.fcmToken || user.fcmToken;
-    if (fcmToken) {
-      await this.notificationService.sendToDevice(
-        fcmToken,
-        'Connexion reussie',
-        `Bienvenue ${user.fullname} ! Vous etes connecte a E-Louma.`,
-        NotificationType.SUCCESS,
-      );
-    }
+    await this.notificationService.notifyUser(
+      String(user._id),
+      'Connexion reussie',
+      `Bienvenue ${user.fullname} ! Vous etes connecte a E-Louma.`,
+      NotificationType.SUCCESS,
+    );
 
     const { password: _pw, ...userWithoutPassword } = user.toObject();
     return { accessToken, user: userWithoutPassword };

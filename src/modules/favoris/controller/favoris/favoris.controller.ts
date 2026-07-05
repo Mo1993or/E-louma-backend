@@ -45,10 +45,7 @@ export class FavorisController {
 
   @UseGuards(JwtAuthGuard)
   @Get('check/:productId')
-  async isFavorite(
-    @Param('productId') productId: string,
-    @Request() req: any,
-  ) {
+  async isFavorite(@Param('productId') productId: string, @Request() req: any) {
     return this.favorisService.isFavorite(req.user.sub, productId);
   }
 }
