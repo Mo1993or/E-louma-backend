@@ -68,6 +68,7 @@ export class AuthService {
     };
     const accessToken = this.jwtService.sign(payload);
     const { password: _pw, ...userWithoutPassword } = user.toObject();
+    await this.generateAndSendCode(user.email, 'REGISTER');
     return { message: 'User created', user: userWithoutPassword, accessToken };
   }
 
@@ -92,15 +93,12 @@ export class AuthService {
     };
     const accessToken = this.jwtService.sign(payload);
 
-    const fcmToken = data.fcmToken || user.fcmToken;
-    if (fcmToken) {
-      await this.notificationService.sendToDevice(
-        fcmToken,
-        'Connexion reussie',
-        `Bienvenue ${user.fullname} ! Vous etes connecte a E-Louma.`,
-        NotificationType.SUCCESS,
-      );
-    }
+    /* await this.notificationService.notifyUser(
+      String(user._id),
+      'Connexion reussie',
+      `Bienvenue ${user.fullname} ! Vous etes connecte a E-Louma.`,
+      NotificationType.SUCCESS,
+    ); */
 
     const { password: _pw, ...userWithoutPassword } = user.toObject();
     return { accessToken, user: userWithoutPassword };
@@ -110,6 +108,10 @@ export class AuthService {
     email: string,
     type: 'REGISTER' | 'PASSWORD_RESET',
   ): Promise<void> {
+    const user = await this.userModel.findOne({
+      email: email,
+    });
+
     const rawCode = crypto.randomInt(100000, 999999).toString();
     const hashedCode = await bcrypt.hash(rawCode, 10);
 
@@ -121,13 +123,14 @@ export class AuthService {
       ? 'Activez votre compte'
       : 'Reinitialisation de votre mot de passe';
     const templateName = isRegister ? 'register' : 'reset-password';
-
-    await this.mailerService.sendMail({
-      to: email,
-      subject: subject,
-      template: templateName,
-      context: { code: rawCode },
-    });
+    if (user && user.isVerified) {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: subject,
+        template: templateName,
+        context: { code: rawCode },
+      });
+    }
   }
 
   async sendVerificationCode(userId: string, email: string) {

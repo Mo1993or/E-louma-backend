@@ -68,9 +68,9 @@ export class ReservationService {
     );
 
     const seller = await this.userModel.findById(product.seller).lean();
-    if (seller?.fcmToken) {
-      this.notificationService.sendToDevice(
-        seller.fcmToken,
+    if (seller) {
+      this.notificationService.notifyUser(
+        String(seller._id),
         'Nouvelle reservation',
         `${createReservationDto.fullname} a reserve votre produit "${product.title}"`,
         NotificationType.SUCCESS,
@@ -187,9 +187,9 @@ export class ReservationService {
 
     if (isSeller && reservation.user) {
       const buyer = await this.userModel.findById(reservation.user).lean();
-      if (buyer?.fcmToken) {
-        this.notificationService.sendToDevice(
-          buyer.fcmToken,
+      if (buyer) {
+        this.notificationService.notifyUser(
+          String(buyer._id),
           'Reservation annulee',
           `Le vendeur a annule votre reservation pour "${product.title}"`,
           NotificationType.MESSAGE,
@@ -197,9 +197,9 @@ export class ReservationService {
       }
     } else if (isBuyer) {
       const seller = await this.userModel.findById(product.seller).lean();
-      if (seller?.fcmToken) {
-        this.notificationService.sendToDevice(
-          seller.fcmToken,
+      if (seller) {
+        this.notificationService.notifyUser(
+          String(seller._id),
           'Reservation annulee',
           `Un acheteur a annule sa reservation pour "${product.title}"`,
           NotificationType.MESSAGE,

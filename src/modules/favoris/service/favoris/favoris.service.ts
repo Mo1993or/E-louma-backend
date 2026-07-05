@@ -37,9 +37,9 @@ export class FavorisService {
     const productDoc = await this.productModel.findById(product).lean();
     if (productDoc?.seller) {
       const seller = await this.userModel.findById(productDoc.seller).lean();
-      if (seller?.fcmToken) {
-        this.notificationService.sendToDevice(
-          seller.fcmToken,
+      if (seller) {
+        this.notificationService.notifyUser(
+          String(seller._id),
           'Nouveau favori',
           `Quelqu'un a ajoute "${productDoc.title}" a ses favoris`,
           NotificationType.MESSAGE,

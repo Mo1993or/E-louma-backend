@@ -29,7 +29,7 @@ export class DashboardService {
       .populate('category', 'name')
       .lean();
 
-    const productIds = products.map((p) => p._id as Types.ObjectId);
+    const productIds = products.map((p) => p._id);
 
     // 2. Stats produits
     const totalProducts = products.length;
@@ -61,7 +61,7 @@ export class DashboardService {
     const soldProductIds = new Set(
       products
         .filter((p) => p.status === ProductStatus.SOLD)
-        .map((p) => (p._id as Types.ObjectId).toString()),
+        .map((p) => p._id.toString()),
     );
 
     const totalRevenue = reservations
@@ -208,7 +208,7 @@ export class DashboardService {
     >();
 
     for (const p of products) {
-      const cat = p.category as any;
+      const cat = p.category;
       if (!cat) continue;
       const catId = cat._id?.toString() ?? 'unknown';
       const catName = cat.name ?? 'Sans categorie';
@@ -230,16 +230,21 @@ export class DashboardService {
   }
 
   async getGlobalStats() {
-    const [totalUsers, totalProducts, totalReservations, totalSold, revenueResult] =
-      await Promise.all([
-        this.userModel.countDocuments(),
-        this.productModel.countDocuments(),
-        this.reservationModel.countDocuments(),
-        this.productModel.countDocuments({ status: ProductStatus.SOLD }),
-        this.reservationModel.aggregate([
-          { $group: { _id: null, total: { $sum: '$price' } } },
-        ]),
-      ]);
+    const [
+      totalUsers,
+      totalProducts,
+      totalReservations,
+      totalSold,
+      revenueResult,
+    ] = await Promise.all([
+      this.userModel.countDocuments(),
+      this.productModel.countDocuments(),
+      this.reservationModel.countDocuments(),
+      this.productModel.countDocuments({ status: ProductStatus.SOLD }),
+      this.reservationModel.aggregate([
+        { $group: { _id: null, total: { $sum: '$price' } } },
+      ]),
+    ]);
 
     return {
       totalUsers,
