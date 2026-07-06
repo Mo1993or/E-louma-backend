@@ -68,7 +68,7 @@ export class AuthService {
     };
     const accessToken = this.jwtService.sign(payload);
     const { password: _pw, ...userWithoutPassword } = user.toObject();
-    await this.generateAndSendCode(user.email, 'REGISTER');
+    //await this.generateAndSendCode(user.email, 'REGISTER');
     return { message: 'User created', user: userWithoutPassword, accessToken };
   }
 
