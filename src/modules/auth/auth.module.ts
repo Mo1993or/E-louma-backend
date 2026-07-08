@@ -40,7 +40,8 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
       useFactory: (configService: ConfigService) => ({
         transport: {
           host: configService.get<string>('MAIL_HOST', 'smtp.mail.ovh.net'),
-          port: configService.get<number>('MAIL_PORT', 465),
+          port: configService.get<number>('MAIL_PORT', 587),
+          secure: false,
           auth: {
             user: configService.get<string>('MAIL_USER'),
             pass: configService.get<string>('MAIL_PASS'),
