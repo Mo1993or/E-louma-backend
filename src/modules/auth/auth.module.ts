@@ -45,6 +45,7 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
             user: configService.get<string>('MAIL_USER'),
             pass: configService.get<string>('MAIL_PASS'),
           },
+          secure: true,
         },
         defaults: {
           from: configService.get<string>(
