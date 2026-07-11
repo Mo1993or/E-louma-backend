@@ -68,7 +68,7 @@ export class AuthService {
     };
     const accessToken = this.jwtService.sign(payload);
     const { password: _pw, ...userWithoutPassword } = user.toObject();
-    await this.generateAndSendCode(user.email, 'REGISTER');
+    //await this.generateAndSendCode(user.email, 'REGISTER');
     return { message: 'User created', user: userWithoutPassword, accessToken };
   }
 
@@ -108,7 +108,6 @@ export class AuthService {
     email: string,
     type: 'REGISTER' | 'PASSWORD_RESET',
   ): Promise<void> {
-    try{
     const user = await this.userModel.findOne({
       email: email,
     });
@@ -125,18 +124,13 @@ export class AuthService {
       : 'Reinitialisation de votre mot de passe';
     const templateName = isRegister ? 'register' : 'reset-password';
     if (user && user.isVerified) {
-      console.log("init mail")
       await this.mailerService.sendMail({
         to: email,
         subject: subject,
         template: templateName,
         context: { code: rawCode },
       });
-       console.log(" mail send")
     }
-  }catch(error){
-     console.log("error generate code mail send", error)
-  }
   }
 
   async sendVerificationCode(userId: string, email: string) {

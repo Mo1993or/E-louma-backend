@@ -27,7 +27,7 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: '30d' },
+        signOptions: { expiresIn: '365d' },
       }),
     }),
     MongooseModule.forFeature([
@@ -41,12 +41,11 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
         transport: {
           host: configService.get<string>('MAIL_HOST', 'smtp.mail.ovh.net'),
           port: configService.get<number>('MAIL_PORT', 465),
-          secure: true,
-          connectionTimeout: 3000,
           auth: {
             user: configService.get<string>('MAIL_USER'),
             pass: configService.get<string>('MAIL_PASS'),
           },
+          secure: true,
         },
         defaults: {
           from: configService.get<string>(
