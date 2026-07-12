@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   BadRequestException,
@@ -132,5 +133,11 @@ export class AuthController {
       );
     }
     return this.authService.verifyCode(email, code);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('delete-account')
+  async deleteAccount(@Request() req: any) {
+    return this.authService.removeAccount(req.user.sub);
   }
 }

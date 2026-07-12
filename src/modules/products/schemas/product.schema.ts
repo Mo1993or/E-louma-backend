@@ -65,6 +65,9 @@ export class Product {
 
   @Prop({ type: Number, default: 0, min: 0 })
   reservations!: number;
+
+  @Prop({ required: false, type: Date })
+  soldAt?: Date;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

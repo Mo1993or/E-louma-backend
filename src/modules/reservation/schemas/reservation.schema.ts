@@ -48,6 +48,9 @@ export class Reservation {
 
     @Prop({ required: true, min: 0 })
     quantity!: string;
+
+    @Prop({ required: false })
+    address?: string;
 }
 
 /**

@@ -138,21 +138,38 @@ export class ReservationService {
     validateReservationDto: ValidateReservationDto,
     userId: string,
   ) {
+    // 1. Recherche du produit pour vérification des droits
     const product = await this.productModel.findById(
       new Types.ObjectId(validateReservationDto.product),
     );
-    if (!product) throw new NotFoundException('Produit introuvable');
+
+    if (!product) {
+      throw new NotFoundException('Produit introuvable');
+    }
+
+    // 2. Vérification que l'utilisateur est bien le vendeur
     if (product.seller?.toString() !== userId) {
       throw new ForbiddenException(
         'Vous ne pouvez pas valider ce produit car il ne vous appartient pas',
       );
     }
-    await this.productModel.updateOne(
-      { _id: product._id },
-      { status: ProductStatus.SOLD },
+
+    // 3. Mise à jour et récupération du document modifié
+    const updatedProduct = await this.productModel.findByIdAndUpdate(
+      product._id,
+      {
+        $set: {
+          status: ProductStatus.SOLD,
+          soldAt: new Date(), // Ajoute la date et l'heure courantes
+        },
+      },
+      { new: true },
     );
 
-    return { message: 'Reservation validee avec succes', product };
+    return {
+      message: 'Reservation validee avec succes',
+      product: updatedProduct,
+    };
   }
 
   /**

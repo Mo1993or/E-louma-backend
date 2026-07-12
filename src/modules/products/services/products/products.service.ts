@@ -11,12 +11,15 @@ import { Product, ProductDocument } from '../../schemas/product.schema';
 import { CreateProductDto } from '../../dto/create-product.dto';
 import { UpdateProductDto } from '../../dto/update-product.dto';
 import { ProductStatus } from 'src/shared/enums/product.enums';
+import { User, UserDocument } from 'src/modules/auth/schemas/user.schema';
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectModel(Product.name)
     private readonly productModel: Model<ProductDocument>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>,
   ) {}
 
   async addProduct(
@@ -24,13 +27,16 @@ export class ProductsService {
     imagesUrls: string[],
     user: Types.ObjectId,
   ) {
+    const sellerInfo = await this.userModel.findById(user).select('phonenumber email');
+    
     const product = await this.productModel.create({
       ...data,
       images: imagesUrls,
       seller: user,
       category: new Types.ObjectId(data.category),
-    });
-    return { message: 'Produit cree avec succes', product };
+    });    
+
+    return { message: 'Produit cree avec succes', product, sellerInfo };
   }
 
   async getProductsByCategoryId(categoryId: string): Promise<ProductDocument[]> {
@@ -48,26 +54,38 @@ export class ProductsService {
     return products;
   }
 
-  async getAllProduct(cursor?: string, limit = 20) {
-    const filter: Record<string, any> = {};
-    if (cursor && Types.ObjectId.isValid(cursor)) {
-      filter._id = { $lt: new Types.ObjectId(cursor) };
-    }
-    const products = await this.productModel
-      .find(filter)
-      .populate('category')
-      .sort({ _id: -1 })
-      .limit(limit + 1)
-      .exec();
-    const hasMore = products.length > limit;
-    if (hasMore) products.pop();
-    const nextCursor = hasMore ? products[products.length - 1]._id.toString() : null;
-    return {
-      products,
-      nextCursor,
-      hasMore,
-    };
+  async getAllProduct(cursor?: string, limit = 20, user?: string) {
+  const filter: Record<string, any> = {};
+
+  // 1. Gestion du curseur pour la pagination
+  if (cursor && Types.ObjectId.isValid(cursor)) {
+    filter._id = { $lt: new Types.ObjectId(cursor) };
   }
+
+  // 2. Exclusion des produits ajoutés par l'utilisateur connecté
+  if (user && Types.ObjectId.isValid(user)) {
+    filter.seller = { $ne: new Types.ObjectId(user) }; // Assurez-vous que le champ s'appelle bien 'seller' dans votre schéma
+  }
+
+  // 3. Récupération des produits avec le filtre mis à jour
+  const products = await this.productModel
+    .find(filter)
+    .populate('category')
+    .sort({ _id: -1 })
+    .limit(limit + 1)
+    .exec();
+
+  const hasMore = products.length > limit;
+  if (hasMore) products.pop();
+
+  const nextCursor = hasMore ? products[products.length - 1]._id.toString() : null;
+
+  return {
+    products,
+    nextCursor,
+    hasMore,
+  };
+}
 
   async getAllProductsOwer(userId: string): Promise<ProductDocument[]> {
     return this.productModel

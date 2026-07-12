@@ -39,6 +39,10 @@ export class CreateReservationDto {
   @IsString()
   @IsNotEmpty({ message: 'La quantité est obligatoire.' })
   quantity!: string;
+
+  @IsString()
+  @IsNotEmpty({ message: "L'adresse est obligatoire." })
+  address!: string;
 }
 
 /**

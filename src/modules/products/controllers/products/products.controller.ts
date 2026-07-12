@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Controller,
@@ -20,6 +21,7 @@ import { CloudinaryService } from 'src/shared/services/cloudinary.service';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
 import { CreateProductDto } from '../../dto/create-product.dto';
 import { UpdateProductDto } from '../../dto/update-product.dto';
+import { OptionalJwtAuthGuard } from 'src/modules/auth/guards/optional-jwt-auth.guard';
 
 @Controller('products')
 export class ProductsController {
@@ -102,14 +104,19 @@ export class ProductsController {
     return this.productsService.getProductsByCategoryId(categoryId);
   }
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get('index')
   async findAllProductAvalaible(
+    @Request() req: any,
     @Query('cursor') cursor?: string,
     @Query('limit') limit?: string,
   ) {
+    const userId = req.user ? req.user.sub : undefined;
+
     return this.productsService.getAllProduct(
       cursor,
       limit ? parseInt(limit, 10) : 20,
+      userId,
     );
   }
 

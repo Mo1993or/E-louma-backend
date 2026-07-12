@@ -149,7 +149,7 @@ export class DashboardService {
       {
         $match: {
           product: { $in: productIds },
-          createdAt: { $gte: twelveMonthsAgo },
+          soldAt: { $gte: twelveMonthsAgo },
         },
       },
       {
