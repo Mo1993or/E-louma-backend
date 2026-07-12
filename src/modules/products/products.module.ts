@@ -5,6 +5,7 @@ import { Product, ProductSchema } from './schemas/product.schema';
 import { ProductsController } from './controllers/products/products.controller';
 import { ProductsService } from './services/products/products.service';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { User, UserSchema } from '../auth/schemas/user.schema';
 
 @Module({
     imports: [
@@ -13,10 +14,14 @@ import { CloudinaryModule } from '../cloudinary/cloudinary.module';
                 name: Product.name,
                 schema: ProductSchema,
             },
+            {
+                name: User.name,
+                schema: UserSchema,
+            },
         ]),
         CloudinaryModule,
     ],
     controllers: [ProductsController],
     providers: [ProductsService]
 })
-export class ProductsModule {}
+export class ProductsModule { }

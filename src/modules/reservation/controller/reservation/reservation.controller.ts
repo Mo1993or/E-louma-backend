@@ -20,6 +20,7 @@ import {
   ValidateReservationDto,
 } from '../../dto/create-reservation.dto';
 import { JwtAuthGuard } from 'src/modules/auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from 'src/modules/auth/guards/optional-jwt-auth.guard';
 
 @Controller('reservation')
 export class ReservationController {
@@ -34,14 +35,14 @@ export class ReservationController {
    *
    * Si le champ `user` n'est pas fourni côté client, il est rempli à partir du token JWT.
    */
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   @Post('add')
 
   async createReservation(
     @Body() createReservationDto: CreateReservationDto,
     @Request() req: any,
   ) {
-    if (!createReservationDto.user) {
+    if (req.user !== null) {
       createReservationDto.user = req.user.sub;
     }
     return this.reservationService.addReservation(createReservationDto);

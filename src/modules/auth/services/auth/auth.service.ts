@@ -25,6 +25,7 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { ResetPasswordDto } from '../../dto/reset-password.dto';
 import { NotificationService } from 'src/modules/notification/notification.service';
 import { NotificationType } from 'src/modules/notification/dto/send-notification.dto';
+import { UserStatus } from 'src/shared/enums/user-status.enum';
 
 type JwtPayload = {
   sub: UserDocument['_id'];
@@ -73,7 +74,10 @@ export class AuthService {
   }
 
   async login(data: LoginDto) {
-    const user = await this.userModel.findOne({ email: data.email });
+    const user = await this.userModel.findOne({
+      email: data.email,
+      status: UserStatus.ENABLED,
+    });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
@@ -210,6 +214,30 @@ export class AuthService {
       .select('-password')
       .lean();
     if (!user) throw new NotFoundException('Utilisateur introuvable');
+    return user;
+  }
+
+  async removeAccount(userId: string) {
+    // 1. Validation de l'ID avant de requêter la base de données
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new NotFoundException('Identifiant utilisateur invalide');
+    }
+
+    // 2. Mise à jour et récupération en une seule opération
+    const user = await this.userModel
+      .findOneAndUpdate(
+        { _id: new Types.ObjectId(userId) },
+        { $set: { status: UserStatus.DISABLED } },
+        { new: true }, // Retourne le document après modification
+      )
+      .select('-password')
+      .lean();
+
+    // 3. Gestion d'erreur si l'utilisateur n'existe pas
+    if (!user) {
+      throw new NotFoundException('Utilisateur introuvable');
+    }
+
     return user;
   }
 
