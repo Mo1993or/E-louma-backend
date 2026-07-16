@@ -46,7 +46,7 @@ export class ProductsService {
     const products = await this.productModel
       .find({ category: new Types.ObjectId(categoryId), status: ProductStatus.AVAILABLE })
       .populate('category')
-      .populate('seller', '-password')
+      .populate('seller', '_id phonenumber')
       .exec();
     if (!products || products.length === 0) {
       throw new NotFoundException('Aucun produit trouve pour cette categorie.');
@@ -71,6 +71,7 @@ export class ProductsService {
   const products = await this.productModel
     .find(filter)
     .populate('category')
+    .populate('seller', '_id phonenumber')
     .sort({ _id: -1 })
     .limit(limit + 1)
     .exec();
@@ -99,7 +100,7 @@ export class ProductsService {
     const product = await this.productModel
       .findOne({ _id: new Types.ObjectId(productId) })
       .populate('category')
-      .populate('seller', '-password')
+      .populate('seller', '_id phonenumber')
       .exec();
     if (!product) throw new NotFoundException('Produit introuvable');
     await this.productModel.updateOne({ _id: product._id }, { $inc: { views: 1 } });
@@ -124,7 +125,7 @@ export class ProductsService {
     return this.productModel
       .find(filter)
       .populate('category')
-      .populate('seller', '-password')
+      .populate('seller', '_id phonenumber')
       .sort({ createdAt: -1 })
       .exec();
   }
