@@ -41,6 +41,7 @@ lerna-debug.log*
 .env.production.local
 .env.local
 .env
+google-credentials.json
 
 # temp directory
 .temp
