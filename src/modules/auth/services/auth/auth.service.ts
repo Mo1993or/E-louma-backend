@@ -26,6 +26,7 @@ import { ResetPasswordDto } from '../../dto/reset-password.dto';
 import { NotificationService } from 'src/modules/notification/notification.service';
 import { NotificationType } from 'src/modules/notification/dto/send-notification.dto';
 import { UserStatus } from 'src/shared/enums/user-status.enum';
+import { StatsService } from 'src/modules/stats/stats.service';
 
 type JwtPayload = {
   sub: UserDocument['_id'];
@@ -44,6 +45,7 @@ export class AuthService {
     private jwtService: JwtService,
     private mailerService: MailerService,
     private notificationService: NotificationService,
+    private statsService: StatsService,
   ) {}
 
   async register(data: RegisterDto) {
@@ -61,6 +63,7 @@ export class AuthService {
       ...data,
       password: hashedPassword,
     });
+    await this.statsService.onUserRegistered();
     const payload: JwtPayload = {
       sub: user._id,
       email: user.email,

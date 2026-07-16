@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { Controller, Get, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { DashboardService } from './dashboard.service';
 
@@ -17,5 +17,12 @@ export class DashboardController {
   @Get('global')
   async globalStats() {
     return this.dashboardService.getGlobalStats();
+  }
+
+  /** Force un recalcul des stats du vendeur connecté, en cas de dérive suspectée. */
+  @UseGuards(JwtAuthGuard)
+  @Post('recalculate')
+  async recalculate(@Request() req: any) {
+    return this.dashboardService.recalculateMyStats(req.user.sub);
   }
 }

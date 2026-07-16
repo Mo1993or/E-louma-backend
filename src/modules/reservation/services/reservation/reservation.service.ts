@@ -24,6 +24,7 @@ import { User, UserDocument } from 'src/modules/auth/schemas/user.schema';
 import { ProductStatus } from 'src/shared/enums/product.enums';
 import { NotificationService } from 'src/modules/notification/notification.service';
 import { NotificationType } from 'src/modules/notification/dto/send-notification.dto';
+import { StatsService } from 'src/modules/stats/stats.service';
 
 @Injectable()
 export class ReservationService {
@@ -38,6 +39,7 @@ export class ReservationService {
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
     private readonly notificationService: NotificationService,
+    private readonly statsService: StatsService,
   ) {}
 
   /**
@@ -61,11 +63,19 @@ export class ReservationService {
     }
     const reservation = await this.reservationModel.create({
       ...createReservationDto,
+      seller: product.seller,
     });
+    const productWasAvailable = product.status === ProductStatus.AVAILABLE;
     await this.productModel.updateOne(
       { _id: product._id },
       { $inc: { reservations: 1 }, status: ProductStatus.RESERVED },
     );
+    if (product.seller) {
+      await this.statsService.onReservationCreated(
+        product.seller,
+        productWasAvailable,
+      );
+    }
 
     const seller = await this.userModel.findById(product.seller).lean();
     if (seller) {
@@ -166,6 +176,24 @@ export class ReservationService {
       { new: true },
     );
 
+    if (product.status !== ProductStatus.SOLD && product.seller) {
+      // Revenu = somme des réservations en cours pour ce produit (gère les
+      // ventes par quantités partielles à plusieurs acheteurs).
+      const revenueResult = await this.reservationModel.aggregate<{
+        total: number;
+      }>([
+        { $match: { product: product._id } },
+        { $group: { _id: null, total: { $sum: '$price' } } },
+      ]);
+      const revenueAmount = revenueResult[0]?.total ?? 0;
+      await this.statsService.onProductSold(
+        product.seller,
+        product.category,
+        product.status,
+        revenueAmount,
+      );
+    }
+
     return {
       message: 'Reservation validee avec succes',
       product: updatedProduct,
@@ -228,7 +256,8 @@ export class ReservationService {
       product: product._id,
     });
 
-    if (remainingReservations === 0) {
+    const productBecameAvailable = remainingReservations === 0;
+    if (productBecameAvailable) {
       await this.productModel.updateOne(
         { _id: product._id },
         { status: ProductStatus.AVAILABLE, $inc: { reservations: -1 } },
@@ -237,6 +266,13 @@ export class ReservationService {
       await this.productModel.updateOne(
         { _id: product._id },
         { $inc: { reservations: -1 } },
+      );
+    }
+
+    if (product.seller) {
+      await this.statsService.onReservationCancelled(
+        product.seller,
+        productBecameAvailable,
       );
     }
 

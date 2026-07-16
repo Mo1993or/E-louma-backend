@@ -1,30 +1,26 @@
 import { Module } from '@nestjs/common';
-import { DashboardService } from './dashboard.service';
-import { DashboardController } from './dashboard.controller';
 import { MongooseModule } from '@nestjs/mongoose';
+import { StatsService } from './stats.service';
+import { VendorStats, VendorStatsSchema } from './schemas/vendor-stats.schema';
+import { GlobalStats, GlobalStatsSchema } from './schemas/global-stats.schema';
 import { Product, ProductSchema } from '../products/schemas/product.schema';
 import {
   Reservation,
   ReservationSchema,
 } from '../reservation/schemas/reservation.schema';
 import { User, UserSchema } from '../auth/schemas/user.schema';
-import {
-  Categorie,
-  CategorieSchema,
-} from '../categories/schemas/categorie.schema';
-import { StatsModule } from '../stats/stats.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
+      { name: VendorStats.name, schema: VendorStatsSchema },
+      { name: GlobalStats.name, schema: GlobalStatsSchema },
       { name: Product.name, schema: ProductSchema },
       { name: Reservation.name, schema: ReservationSchema },
       { name: User.name, schema: UserSchema },
-      { name: Categorie.name, schema: CategorieSchema },
     ]),
-    StatsModule,
   ],
-  providers: [DashboardService],
-  controllers: [DashboardController],
+  providers: [StatsService],
+  exports: [StatsService],
 })
-export class DashboardModule {}
+export class StatsModule {}

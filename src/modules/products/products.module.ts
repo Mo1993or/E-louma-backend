@@ -6,6 +6,7 @@ import { ProductsController } from './controllers/products/products.controller';
 import { ProductsService } from './services/products/products.service';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { User, UserSchema } from '../auth/schemas/user.schema';
+import { StatsModule } from '../stats/stats.module';
 
 @Module({
     imports: [
@@ -20,6 +21,7 @@ import { User, UserSchema } from '../auth/schemas/user.schema';
             },
         ]),
         CloudinaryModule,
+        StatsModule,
     ],
     controllers: [ProductsController],
     providers: [ProductsService]

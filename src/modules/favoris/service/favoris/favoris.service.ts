@@ -10,6 +10,7 @@ import {
 import { User, UserDocument } from 'src/modules/auth/schemas/user.schema';
 import { NotificationService } from 'src/modules/notification/notification.service';
 import { NotificationType } from 'src/modules/notification/dto/send-notification.dto';
+import { StatsService } from 'src/modules/stats/stats.service';
 
 @Injectable()
 export class FavorisService {
@@ -21,6 +22,7 @@ export class FavorisService {
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
     private readonly notificationService: NotificationService,
+    private readonly statsService: StatsService,
   ) {}
 
   async addFavoris(user: string, product: string) {
@@ -36,6 +38,7 @@ export class FavorisService {
 
     const productDoc = await this.productModel.findById(product).lean();
     if (productDoc?.seller) {
+      await this.statsService.onFavoriteChanged(productDoc.seller, 1);
       const seller = await this.userModel.findById(productDoc.seller).lean();
       if (seller) {
         this.notificationService.notifyUser(
@@ -51,6 +54,10 @@ export class FavorisService {
   }
 
   async toggleFavoris(user: string, product: string) {
+    const productDoc = await this.productModel
+      .findById(product)
+      .select('seller')
+      .lean();
     const existing = await this.favorisModel.findOne({ user, product });
     if (existing) {
       await this.favorisModel.deleteOne({ _id: existing._id });
@@ -58,6 +65,9 @@ export class FavorisService {
         { _id: new Types.ObjectId(product) },
         { $inc: { favoritesCount: -1 } },
       );
+      if (productDoc?.seller) {
+        await this.statsService.onFavoriteChanged(productDoc.seller, -1);
+      }
       return { message: 'Retire des favoris', isFavorite: false };
     }
     await this.favorisModel.create({ user, product });
@@ -65,10 +75,17 @@ export class FavorisService {
       { _id: new Types.ObjectId(product) },
       { $inc: { favoritesCount: 1 } },
     );
+    if (productDoc?.seller) {
+      await this.statsService.onFavoriteChanged(productDoc.seller, 1);
+    }
     return { message: 'Ajoute aux favoris', isFavorite: true };
   }
 
   async removeFavoris(user: string, product: string) {
+    const productDoc = await this.productModel
+      .findById(product)
+      .select('seller')
+      .lean();
     const result = await this.favorisModel.deleteOne({ user, product });
     if (result.deletedCount === 0) {
       throw new NotFoundException('Ce favori est introuvable');
@@ -77,6 +94,9 @@ export class FavorisService {
       { _id: new Types.ObjectId(product) },
       { $inc: { favoritesCount: -1 } },
     );
+    if (productDoc?.seller) {
+      await this.statsService.onFavoriteChanged(productDoc.seller, -1);
+    }
     return { message: 'Retire des favoris' };
   }
 
