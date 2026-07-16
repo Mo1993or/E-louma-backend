@@ -166,5 +166,5 @@ export class ProductsService {
     }
     await this.productModel.findByIdAndDelete(new Types.ObjectId(productId));
     return { message: 'Produit supprime avec succes' };
-  }
+  } 
 }
