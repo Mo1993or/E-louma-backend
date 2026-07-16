@@ -16,7 +16,7 @@ export class DashboardController {
   @UseGuards(JwtAuthGuard)
   @Get('global')
   async globalStats() {
-    return this.dashboardService.getGlobalStats();
+    return this.dashboardService.getGlobalStats(); //
   }
 
   /** Force un recalcul des stats du vendeur connecté, en cas de dérive suspectée. */
