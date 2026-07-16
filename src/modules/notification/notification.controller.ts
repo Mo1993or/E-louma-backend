@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import {
   Body,
@@ -127,18 +125,8 @@ export class NotificationController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async listNotifications(
-    @Request() req: any,
-    @Query('page') page?: string,
-    @Query('limit') limit?: string,
-    @Query('unreadOnly') unreadOnly?: string,
-  ) {
-    return await this.notificationService.listForUser(
-      req.user.sub,
-      page ? parseInt(page, 10) : undefined,
-      limit ? parseInt(limit, 10) : undefined,
-      unreadOnly === 'true',
-    );
+  async listNotifications(@Request() req: any) {
+    return await this.notificationService.listForUser(req.user.sub);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -152,24 +152,15 @@ export class NotificationService {
     return notification;
   }
 
-  /**
-   * Liste paginée des notifications d'un utilisateur, triées par date décroissante.
-   */
-  async listForUser(userId: string, page = 1, limit = 20, unreadOnly = false) {
-    const filter: Record<string, unknown> = { recipient: userId };
-    if (unreadOnly) filter.read = false;
+  async listForUser(userId: string) {
+    const recipient = new Types.ObjectId(userId);
 
-    const [items, total] = await Promise.all([
-      this.notificationModel
-        .find(filter)
-        .sort({ createdAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean(),
-      this.notificationModel.countDocuments(filter),
-    ]);
+    const notifications = await this.notificationModel.find({
+      recipient: recipient,
+      read: false,
+    });
 
-    return { items, total, page, limit };
+    return notifications;
   }
 
   /**
@@ -177,7 +168,7 @@ export class NotificationService {
    */
   async countUnread(userId: string): Promise<{ count: number }> {
     const count = await this.notificationModel.countDocuments({
-      recipient: userId,
+      recipient: new Types.ObjectId(userId),
       read: false,
     });
     return { count };
@@ -191,7 +182,7 @@ export class NotificationService {
     notificationId: string,
   ): Promise<NotificationDocument> {
     const notification = await this.notificationModel.findOneAndUpdate(
-      { _id: notificationId, recipient: userId },
+      { _id: notificationId, recipient: new Types.ObjectId(userId) },
       { read: true, readAt: new Date() },
       { new: true },
     );
@@ -206,7 +197,7 @@ export class NotificationService {
    */
   async markAllAsRead(userId: string): Promise<{ modifiedCount: number }> {
     const result = await this.notificationModel.updateMany(
-      { recipient: userId, read: false },
+      { recipient: new Types.ObjectId(userId), read: false },
       { read: true, readAt: new Date() },
     );
     return { modifiedCount: result.modifiedCount };
@@ -218,7 +209,7 @@ export class NotificationService {
   async deleteOne(userId: string, notificationId: string): Promise<void> {
     const result = await this.notificationModel.deleteOne({
       _id: notificationId,
-      recipient: userId,
+      recipient: new Types.ObjectId(userId),
     });
     if (result.deletedCount === 0) {
       throw new NotFoundException('Notification introuvable');
@@ -230,7 +221,7 @@ export class NotificationService {
    */
   async deleteAllForUser(userId: string): Promise<{ deletedCount: number }> {
     const result = await this.notificationModel.deleteMany({
-      recipient: userId,
+      recipient: new Types.ObjectId(userId),
     });
     return { deletedCount: result.deletedCount };
   }

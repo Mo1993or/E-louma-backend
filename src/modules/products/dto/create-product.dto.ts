@@ -43,7 +43,8 @@ export class CreateProductDto {
   quantity!: string;
 
   @IsEnum(ProductCondition, {
-    message: 'La condition doit être : neuf, excellent, bon état ou user.',
+    message:
+      'La condition doit être : neuf, seconde main, très bon état, bon état ou satisfaisant.',
   })
   condition!: ProductCondition;
 
