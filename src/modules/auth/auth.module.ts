@@ -16,11 +16,13 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
+import { StatsModule } from '../stats/stats.module';
 
 @Module({
   imports: [
     PassportModule,
     CloudinaryModule,
+    StatsModule,
     ConfigModule.forRoot(),
     JwtModule.registerAsync({
       imports: [ConfigModule],

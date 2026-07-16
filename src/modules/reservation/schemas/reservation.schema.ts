@@ -43,6 +43,15 @@ export class Reservation {
     })
     user!: Types.ObjectId;
 
+    // Vendeur du produit réservé, dénormalisé pour éviter une jointure via Product.
+    @Prop({
+        type: Types.ObjectId,
+        ref: 'User',
+        required: false,
+        index: true,
+    })
+    seller?: Types.ObjectId;
+
     @Prop({ required: true, min: 0 })
     price!: number;
 

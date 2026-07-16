@@ -12,6 +12,7 @@ import { CreateProductDto } from '../../dto/create-product.dto';
 import { UpdateProductDto } from '../../dto/update-product.dto';
 import { ProductStatus } from 'src/shared/enums/product.enums';
 import { User, UserDocument } from 'src/modules/auth/schemas/user.schema';
+import { StatsService } from 'src/modules/stats/stats.service';
 
 @Injectable()
 export class ProductsService {
@@ -20,6 +21,7 @@ export class ProductsService {
     private readonly productModel: Model<ProductDocument>,
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
+    private readonly statsService: StatsService,
   ) {}
 
   async addProduct(
@@ -28,13 +30,16 @@ export class ProductsService {
     user: Types.ObjectId,
   ) {
     const sellerInfo = await this.userModel.findById(user).select('phonenumber email');
-    
+    const category = new Types.ObjectId(data.category);
+
     const product = await this.productModel.create({
       ...data,
       images: imagesUrls,
       seller: user,
-      category: new Types.ObjectId(data.category),
-    });    
+      category,
+    });
+
+    await this.statsService.onProductCreated(user, category);
 
     return { message: 'Produit cree avec succes', product, sellerInfo };
   }
@@ -104,6 +109,13 @@ export class ProductsService {
       .exec();
     if (!product) throw new NotFoundException('Produit introuvable');
     await this.productModel.updateOne({ _id: product._id }, { $inc: { views: 1 } });
+    // `seller` est peuplé ci-dessus (document User), d'où l'accès via `_id`.
+    const populatedSeller = product.seller as unknown as
+      | { _id: Types.ObjectId }
+      | undefined;
+    if (populatedSeller?._id) {
+      await this.statsService.onProductViewed(populatedSeller._id);
+    }
     return product;
   }
 
@@ -142,8 +154,11 @@ export class ProductsService {
       throw new ForbiddenException('Vous ne pouvez pas modifier ce produit');
     }
     const updateData: Record<string, any> = { ...data };
-    if (data.category) {
-      updateData.category = new Types.ObjectId(data.category);
+    const newCategoryId = data.category
+      ? new Types.ObjectId(data.category)
+      : undefined;
+    if (newCategoryId) {
+      updateData.category = newCategoryId;
     }
     if (newImages && newImages.length > 0) {
       updateData.images = newImages;
@@ -155,6 +170,23 @@ export class ProductsService {
         { new: true },
       )
       .populate('category');
+
+    const sellerId = product.seller;
+    if (data.status && data.status !== product.status) {
+      await this.statsService.onProductStatusChanged(
+        sellerId,
+        product.status,
+        data.status,
+      );
+    }
+    if (newCategoryId && newCategoryId.toString() !== product.category.toString()) {
+      await this.statsService.onProductCategoryChanged(
+        sellerId,
+        product.category,
+        newCategoryId,
+      );
+    }
+
     return { message: 'Produit mis a jour', product: updated };
   }
 
@@ -165,6 +197,11 @@ export class ProductsService {
       throw new ForbiddenException('Vous ne pouvez pas supprimer ce produit');
     }
     await this.productModel.findByIdAndDelete(new Types.ObjectId(productId));
+    await this.statsService.onProductDeleted(
+      product.seller,
+      product.category,
+      product.status,
+    );
     return { message: 'Produit supprime avec succes' };
   } 
 }
