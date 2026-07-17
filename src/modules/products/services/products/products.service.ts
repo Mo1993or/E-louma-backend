@@ -97,6 +97,7 @@ export class ProductsService {
     return this.productModel
       .find({ seller: new Types.ObjectId(userId) })
       .populate('category')
+      .populate('seller', '_id phonenumber')
       .sort({ createdAt: -1 })
       .exec();
   }
@@ -169,7 +170,8 @@ export class ProductsService {
         { $set: updateData },
         { new: true },
       )
-      .populate('category');
+      .populate('category')
+      .populate('seller', '_id phonenumber');
 
     const sellerId = product.seller;
     if (data.status && data.status !== product.status) {

@@ -11,6 +11,6 @@ export class RegisterDto {
   @IsNotEmpty()
   phonenumber!: string;
 
-  @MinLength(6)
+  @MinLength(8)
   password!: string;
 }
