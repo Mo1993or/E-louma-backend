@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, Schema as MongooseSchema, Types } from 'mongoose';
 
 export type ReservationDocument = HydratedDocument<Reservation>;
 
@@ -28,7 +28,7 @@ export class Reservation {
     phonenumber!: string;
 
     @Prop({
-        type: Types.ObjectId,
+        type: MongooseSchema.Types.ObjectId,
         ref: 'Product',
         required: true,
         index: true,
@@ -36,7 +36,7 @@ export class Reservation {
     product!: Types.ObjectId;
 
     @Prop({
-        type: Types.ObjectId,
+        type: MongooseSchema.Types.ObjectId,
         ref: 'User',
         required: false,
         index: true,
@@ -45,7 +45,7 @@ export class Reservation {
 
     // Vendeur du produit réservé, dénormalisé pour éviter une jointure via Product.
     @Prop({
-        type: Types.ObjectId,
+        type: MongooseSchema.Types.ObjectId,
         ref: 'User',
         required: false,
         index: true,

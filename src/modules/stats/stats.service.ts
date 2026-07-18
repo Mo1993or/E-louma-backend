@@ -143,8 +143,7 @@ export class StatsService {
     if (field) inc[field] = -1;
     if (status === ProductStatus.SOLD && soldRevenue) {
       inc.totalRevenue = -soldRevenue;
-      inc[`categoryBreakdown.${categoryId.toString()}.revenue`] =
-        -soldRevenue;
+      inc[`categoryBreakdown.${categoryId.toString()}.revenue`] = -soldRevenue;
     }
 
     await this.vendorStatsModel.updateOne({ seller: sellerId }, { $inc: inc });
@@ -315,11 +314,8 @@ export class StatsService {
 
     const products = await this.productModel
       .find({ seller })
-      .select(
-        'category price status views favoritesCount soldAt soldRevenue',
-      )
+      .select('category price status views favoritesCount soldAt soldRevenue')
       .lean();
-    const productIds = products.map((p) => p._id);
 
     const totalProducts = products.length;
     const totalAvailable = products.filter(
@@ -337,11 +333,15 @@ export class StatsService {
       0,
     );
 
+    // Filtre par `seller` (fiablement un ObjectId en pratique) plutôt que par
+    // `product` : ce champ est stocké en base comme une simple chaîne (bug de
+    // registration de schéma Mongoose/Mongoose 9 sur les Prop ObjectId, cf.
+    // Reservation.product/user), donc un `$in` avec de vrais ObjectId ne
+    // matcherait jamais aucun document.
     const reservations = (await this.reservationModel
-      .find({ product: { $in: productIds } })
-      .select('product price createdAt')
+      .find({ seller })
+      .select('price createdAt')
       .lean()) as unknown as {
-      product: Types.ObjectId;
       price: number;
       createdAt: Date;
     }[];

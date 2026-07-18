@@ -1,26 +1,95 @@
 import { Injectable } from '@nestjs/common';
-import { Types } from 'mongoose';
+import { InjectModel } from '@nestjs/mongoose';
+import { Product, ProductDocument } from '../products/schemas/product.schema';
+import { Model, Types } from 'mongoose';
+import {
+  Reservation,
+  ReservationDocument,
+} from '../reservation/schemas/reservation.schema';
+import { User, UserDocument } from '../auth/schemas/user.schema';
+import {
+  Categorie,
+  CategorieDocument,
+} from '../categories/schemas/categorie.schema';
 import { StatsService } from '../stats/stats.service';
 
 /**
- * Le dashboard ne fait plus aucun calcul lourd à la lecture : les totaux et la
- * tendance mensuelle viennent de VendorStats (maintenu à jour en temps réel
- * par StatsService).
+ * Le dashboard ne fait plus aucun calcul lourd à la lecture : les totaux, la
+ * tendance mensuelle et la répartition par catégorie viennent de VendorStats
+ * (maintenu à jour en temps réel par StatsService). Seules deux requêtes
+ * indexées et bornées (réservations récentes, top produits) restent ici.
  */
 @Injectable()
 export class DashboardService {
-  constructor(private readonly statsService: StatsService) {}
+  constructor(
+    @InjectModel(Product.name)
+    private readonly productModel: Model<ProductDocument>,
+    @InjectModel(Reservation.name)
+    private readonly reservationModel: Model<ReservationDocument>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>,
+    @InjectModel(Categorie.name)
+    private readonly categorieModel: Model<CategorieDocument>,
+    private readonly statsService: StatsService,
+  ) {}
 
   async getDashboard(userId: string) {
     const seller = new Types.ObjectId(userId);
-    const vendorStats = await this.statsService.getVendorStats(seller);
+
+    const [
+      vendorStats,
+      recentReservations,
+      topProductsByViews,
+      topProductsByReservations,
+      sellerProfile,
+    ] = await Promise.all([
+      this.statsService.getVendorStats(seller),
+      this.reservationModel
+        .find({ seller })
+        .populate('product', 'title price status')
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .lean(),
+      this.productModel
+        .find({ seller })
+        .select(
+          'title price images status views reservations favoritesCount category',
+        )
+        .populate('category', 'name')
+        .sort({ views: -1 })
+        .limit(5)
+        .lean(),
+      this.productModel
+        .find({ seller })
+        .select(
+          'title price images status views reservations favoritesCount category',
+        )
+        .populate('category', 'name')
+        .sort({ reservations: -1 })
+        .limit(5)
+        .lean(),
+      this.userModel.findById(seller).select('-password').lean(),
+    ]);
 
     return {
-      totalRevenue: vendorStats.totalRevenue,
-      totalSold: vendorStats.totalSold,
-      totalReservations: vendorStats.totalReservations,
-      totalProducts: vendorStats.totalProducts,
+      seller: sellerProfile,
+      stats: {
+        totalProducts: vendorStats.totalProducts,
+        totalAvailable: vendorStats.totalAvailable,
+        totalReserved: vendorStats.totalReserved,
+        totalSold: vendorStats.totalSold,
+        totalReservations: vendorStats.totalReservations,
+        totalRevenue: vendorStats.totalRevenue,
+        totalViews: vendorStats.totalViews,
+        totalFavorites: vendorStats.totalFavorites,
+      },
+      recentReservations,
+      topProductsByViews,
+      topProductsByReservations,
       monthlyTrend: this.formatMonthlyTrend(vendorStats.monthlyTrend),
+      categoryBreakdown: await this.formatCategoryBreakdown(
+        vendorStats.categoryBreakdown,
+      ),
     };
   }
 
@@ -64,5 +133,27 @@ export class DashboardService {
     }
 
     return months;
+  }
+
+  private async formatCategoryBreakdown(
+    categoryBreakdown:
+      | Record<string, { count: number; revenue: number }>
+      | undefined,
+  ) {
+    const categoryIds = Object.keys(categoryBreakdown ?? {});
+    if (categoryIds.length === 0) return [];
+
+    const categories = await this.categorieModel
+      .find({ _id: { $in: categoryIds.map((id) => new Types.ObjectId(id)) } })
+      .select('name')
+      .lean();
+    const nameById = new Map(categories.map((c) => [c._id.toString(), c.name]));
+
+    return categoryIds.map((categoryId) => ({
+      categoryId,
+      name: nameById.get(categoryId) ?? 'Sans categorie',
+      count: categoryBreakdown![categoryId].count,
+      revenue: categoryBreakdown![categoryId].revenue,
+    }));
   }
 }
