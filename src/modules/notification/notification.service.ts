@@ -155,9 +155,11 @@ export class NotificationService {
   async listForUser(userId: string) {
     const recipient = new Types.ObjectId(userId);
 
-    const notifications = await this.notificationModel.find({
-      recipient: recipient,
-    });
+    const notifications = await this.notificationModel
+      .find({
+        recipient: recipient,
+      })
+      .sort({ createdAt: -1 });
 
     return notifications;
   }

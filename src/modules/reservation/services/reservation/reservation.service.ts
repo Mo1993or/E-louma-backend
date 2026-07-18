@@ -164,28 +164,35 @@ export class ReservationService {
       );
     }
 
-    // 3. Mise à jour et récupération du document modifié
-    const updatedProduct = await this.productModel.findByIdAndUpdate(
-      product._id,
-      {
-        $set: {
-          status: ProductStatus.SOLD,
-          soldAt: new Date(), // Ajoute la date et l'heure courantes
-        },
-      },
-      { new: true },
-    );
-
-    if (product.status !== ProductStatus.SOLD && product.seller) {
-      // Revenu = somme des réservations en cours pour ce produit (gère les
-      // ventes par quantités partielles à plusieurs acheteurs).
+    // 3. Calcule le revenu (somme des réservations en cours pour ce produit,
+    // gère les ventes par quantités partielles à plusieurs acheteurs) et le
+    // fige sur le produit : les réservations peuvent être supprimées plus
+    // tard (annulation, nettoyage), ce revenu doit donc survivre à leur suppression.
+    let revenueAmount = product.soldRevenue ?? 0;
+    if (product.status !== ProductStatus.SOLD) {
       const revenueResult = await this.reservationModel.aggregate<{
         total: number;
       }>([
         { $match: { product: product._id } },
         { $group: { _id: null, total: { $sum: '$price' } } },
       ]);
-      const revenueAmount = revenueResult[0]?.total ?? 0;
+      revenueAmount = revenueResult[0]?.total ?? 0;
+    }
+
+    // 4. Mise à jour et récupération du document modifié
+    const updatedProduct = await this.productModel.findByIdAndUpdate(
+      product._id,
+      {
+        $set: {
+          status: ProductStatus.SOLD,
+          soldAt: new Date(), // Ajoute la date et l'heure courantes
+          soldRevenue: revenueAmount,
+        },
+      },
+      { new: true },
+    );
+
+    if (product.status !== ProductStatus.SOLD && product.seller) {
       await this.statsService.onProductSold(
         product.seller,
         product.category,

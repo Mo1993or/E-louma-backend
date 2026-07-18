@@ -133,6 +133,7 @@ export class StatsService {
     sellerId: Types.ObjectId,
     categoryId: Types.ObjectId,
     status: ProductStatus,
+    soldRevenue?: number,
   ) {
     const field = statusField(status);
     const inc: Record<string, number> = {
@@ -140,6 +141,11 @@ export class StatsService {
       [`categoryBreakdown.${categoryId.toString()}.count`]: -1,
     };
     if (field) inc[field] = -1;
+    if (status === ProductStatus.SOLD && soldRevenue) {
+      inc.totalRevenue = -soldRevenue;
+      inc[`categoryBreakdown.${categoryId.toString()}.revenue`] =
+        -soldRevenue;
+    }
 
     await this.vendorStatsModel.updateOne({ seller: sellerId }, { $inc: inc });
     await this.globalStatsModel.updateOne(
@@ -147,7 +153,9 @@ export class StatsService {
       {
         $inc: {
           totalProducts: -1,
-          ...(status === ProductStatus.SOLD ? { totalSold: -1 } : {}),
+          ...(status === ProductStatus.SOLD
+            ? { totalSold: -1, totalRevenue: -(soldRevenue ?? 0) }
+            : {}),
         },
       },
     );
@@ -307,7 +315,9 @@ export class StatsService {
 
     const products = await this.productModel
       .find({ seller })
-      .select('category price status views favoritesCount')
+      .select(
+        'category price status views favoritesCount soldAt soldRevenue',
+      )
       .lean();
     const productIds = products.map((p) => p._id);
 
@@ -337,12 +347,10 @@ export class StatsService {
     }[];
     const totalReservations = reservations.length;
 
-    const soldProductById = new Map(
-      products
-        .filter((p) => p.status === ProductStatus.SOLD)
-        .map((p) => [p._id.toString(), p]),
-    );
-
+    // Le revenu est dérivé de `product.soldRevenue`/`soldAt` (figés au moment
+    // de la vente) et non des réservations en base : celles-ci peuvent être
+    // supprimées après la vente (annulation, nettoyage), ce qui effacerait à
+    // tort le revenu historique si on le recalculait à partir d'elles.
     let totalRevenue = 0;
     const categoryBreakdown: Record<
       string,
@@ -366,25 +374,25 @@ export class StatsService {
     twelveMonthsAgo.setDate(1);
     twelveMonthsAgo.setHours(0, 0, 0, 0);
 
-    for (const r of reservations) {
-      const productId = r.product?.toString();
-      const sold = productId ? soldProductById.get(productId) : undefined;
-      if (sold) {
-        totalRevenue += r.price ?? 0;
-        const catId = sold.category?.toString();
-        if (catId) {
-          if (!categoryBreakdown[catId]) {
-            categoryBreakdown[catId] = { count: 0, revenue: 0 };
-          }
-          categoryBreakdown[catId].revenue += r.price ?? 0;
+    for (const p of products) {
+      if (p.status !== ProductStatus.SOLD || !p.soldRevenue) continue;
+      totalRevenue += p.soldRevenue;
+      const catId = p.category?.toString();
+      if (catId) {
+        if (!categoryBreakdown[catId]) {
+          categoryBreakdown[catId] = { count: 0, revenue: 0 };
         }
-        if (r.createdAt && r.createdAt >= twelveMonthsAgo) {
-          const key = monthKey(r.createdAt);
-          if (!monthlyTrend[key])
-            monthlyTrend[key] = { reservations: 0, revenue: 0 };
-          monthlyTrend[key].revenue += r.price ?? 0;
-        }
+        categoryBreakdown[catId].revenue += p.soldRevenue;
       }
+      if (p.soldAt && p.soldAt >= twelveMonthsAgo) {
+        const key = monthKey(p.soldAt);
+        if (!monthlyTrend[key])
+          monthlyTrend[key] = { reservations: 0, revenue: 0 };
+        monthlyTrend[key].revenue += p.soldRevenue;
+      }
+    }
+
+    for (const r of reservations) {
       const createdAt = r.createdAt;
       if (createdAt && createdAt >= twelveMonthsAgo) {
         const key = monthKey(createdAt);
@@ -438,20 +446,11 @@ export class StatsService {
       this.productModel.countDocuments(),
       this.reservationModel.countDocuments(),
       this.productModel.countDocuments({ status: ProductStatus.SOLD }),
-      // Revenu = uniquement les réservations rattachées à un produit vendu,
-      // cohérent avec la définition utilisée par les hooks incrémentaux (onProductSold).
-      this.reservationModel.aggregate<{ total: number }>([
-        {
-          $lookup: {
-            from: this.productModel.collection.name,
-            localField: 'product',
-            foreignField: '_id',
-            as: 'productDoc',
-          },
-        },
-        { $unwind: '$productDoc' },
-        { $match: { 'productDoc.status': ProductStatus.SOLD } },
-        { $group: { _id: null, total: { $sum: '$price' } } },
+      // Revenu = somme de `soldRevenue` figée sur chaque produit vendu, pas
+      // les réservations (supprimables après la vente, cf. recalculateVendorStats).
+      this.productModel.aggregate<{ total: number }>([
+        { $match: { status: ProductStatus.SOLD } },
+        { $group: { _id: null, total: { $sum: '$soldRevenue' } } },
       ]),
     ]);
 

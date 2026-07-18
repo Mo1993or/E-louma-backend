@@ -68,6 +68,10 @@ export class Product {
 
   @Prop({ required: false, type: Date })
   soldAt?: Date;
+
+  /** Revenu figé au moment de la vente (somme des réservations à cet instant). */
+  @Prop({ required: false, type: Number, min: 0 })
+  soldRevenue?: number;
 }
 
 export const ProductSchema = SchemaFactory.createForClass(Product);

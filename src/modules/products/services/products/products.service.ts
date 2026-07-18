@@ -203,6 +203,7 @@ export class ProductsService {
       product.seller,
       product.category,
       product.status,
+      product.soldRevenue,
     );
     return { message: 'Produit supprime avec succes' };
   } 
