@@ -157,7 +157,6 @@ export class NotificationService {
 
     const notifications = await this.notificationModel.find({
       recipient: recipient,
-      read: false,
     });
 
     return notifications;
