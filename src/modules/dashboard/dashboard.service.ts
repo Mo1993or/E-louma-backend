@@ -12,6 +12,7 @@ import {
   CategorieDocument,
 } from '../categories/schemas/categorie.schema';
 import { StatsService } from '../stats/stats.service';
+import { ProductStatus } from 'src/shared/enums/product.enums';
 
 /**
  * Le dashboard ne fait plus aucun calcul lourd à la lecture : les totaux, la
@@ -60,7 +61,7 @@ export class DashboardService {
         .limit(5)
         .lean(),
       this.productModel
-        .find({ seller })
+        .find({ seller, status: ProductStatus.SOLD })
         .select(
           'title price images status views reservations favoritesCount category',
         )
