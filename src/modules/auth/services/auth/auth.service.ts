@@ -63,6 +63,7 @@ export class AuthService {
     const user = await this.userModel.create({
       ...data,
       password: hashedPassword,
+      status: UserStatus.ENABLED,
     });
     await this.statsService.onUserRegistered();
     const payload: JwtPayload = {
