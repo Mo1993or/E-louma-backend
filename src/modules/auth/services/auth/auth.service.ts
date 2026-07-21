@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -79,7 +80,6 @@ export class AuthService {
   async login(data: LoginDto) {
     const user = await this.userModel.findOne({
       email: data.email,
-      status: UserStatus.ENABLED,
     });
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
@@ -87,6 +87,11 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(data.password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+    if (user && user.status === UserStatus.DISABLED) {
+      throw new ConflictException(
+        "Votre compte à été supprimé merci de contacter l'administrateur",
+      );
     }
     await this.userModel.updateOne(
       { _id: new Types.ObjectId(user._id) },

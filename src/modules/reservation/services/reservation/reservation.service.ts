@@ -187,6 +187,7 @@ export class ReservationService {
           status: ProductStatus.SOLD,
           soldAt: new Date(), // Ajoute la date et l'heure courantes
           soldRevenue: revenueAmount,
+          price: validateReservationDto.price,
         },
       },
       { new: true },

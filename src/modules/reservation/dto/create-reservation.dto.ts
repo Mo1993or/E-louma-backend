@@ -53,6 +53,12 @@ export class ValidateReservationDto {
   @IsNotEmpty()
   product!: string;
 
+  @IsNumber()
+  @IsOptional()
+  @Min(0, { message: 'Le prix doit être supérieur ou égal à 0.' })
+  @Type(() => Number)
+  price?: number;
+
   /* @IsString()
   @IsNotEmpty()
   reservationId!: string; */
