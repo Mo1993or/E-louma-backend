@@ -28,13 +28,7 @@ import { NotificationService } from 'src/modules/notification/notification.servi
 import { NotificationType } from 'src/modules/notification/dto/send-notification.dto';
 import { UserStatus } from 'src/shared/enums/user-status.enum';
 import { StatsService } from 'src/modules/stats/stats.service';
-
-type JwtPayload = {
-  sub: UserDocument['_id'];
-  email: string;
-  role: string;
-  fcmToken?: string;
-};
+import { JwtPayload } from '../../guards/jwt-auth.guard';
 
 @Injectable()
 export class AuthService {

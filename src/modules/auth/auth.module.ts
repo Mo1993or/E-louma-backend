@@ -17,6 +17,9 @@ import { join } from 'path';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { StatsModule } from '../stats/stats.module';
+import { UsersService } from './services/users/users.service';
+import { ProductsService } from './services/products/products.service';
+import { Product, ProductSchema } from '../products/schemas/product.schema';
 
 @Module({
   imports: [
@@ -34,6 +37,7 @@ import { StatsModule } from '../stats/stats.module';
     }),
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
+      { name: Product.name, schema: ProductSchema },
       { name: VerificationCode.name, schema: VerificationCodeSchema },
     ]),
     MailerModule.forRootAsync({
@@ -64,6 +68,6 @@ import { StatsModule } from '../stats/stats.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
+  providers: [AuthService, JwtStrategy, UsersService, ProductsService],
 })
 export class AuthModule {}

@@ -10,15 +10,15 @@ export class UpdateProfileDto {
   phonenumber?: string;
 
   @IsString()
-  @MinLength(6, {
-    message: 'Le mot de passe doit contenir au moins 6 caractères.',
+  @MinLength(8, {
+    message: 'Le mot de passe doit contenir au moins 8 caractères.',
   })
   @IsOptional()
   currentPassword?: string;
 
   @IsString()
-  @MinLength(6, {
-    message: 'Le nouveau mot de passe doit contenir au moins 6 caractères.',
+  @MinLength(8, {
+    message: 'Le nouveau mot de passe doit contenir au moins 8 caractères.',
   })
   @IsOptional()
   newPassword?: string;

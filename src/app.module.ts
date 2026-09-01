@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -13,6 +14,10 @@ import { ReservationModule } from './modules/reservation/reservation.module';
 import { FavorisModule } from './modules/favoris/favoris.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+import { PlansModule } from './modules/plans/plans.module';
+import { AdminModule } from './modules/admin/admin.module';
+import { PaydunyaService } from './modules/paydunya/paydunya.service';
 
 @Module({
   imports: [
@@ -37,8 +42,11 @@ import { NotificationModule } from './modules/notification/notification.module';
     ReservationModule,
     FavorisModule,
     DashboardModule,
+    SubscriptionsModule,
+    PlansModule,
+    AdminModule,
   ],
   controllers: [AppController],
-  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }],
+  providers: [AppService, { provide: APP_GUARD, useClass: ThrottlerGuard }, PaydunyaService],
 })
 export class AppModule {}
