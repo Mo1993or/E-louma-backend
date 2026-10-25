@@ -19,6 +19,6 @@ RUN npm install --omit=dev && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 
-EXPOSE 8080
+EXPOSE 3000
 
 CMD ["node", "dist/main.js"]
